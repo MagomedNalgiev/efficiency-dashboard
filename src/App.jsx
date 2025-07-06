@@ -2,12 +2,16 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import { Link } from "react-router-dom";
+import Header from "./components/Header";
+
 import './App.css'
 
 export default function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
       {/* Header */}
+      <Header />
+
       <header className="text-center my-8">
         <h1 className="text-4xl md:text-5xl font-bold text-green-400 mb-4">
           🚀 Efficiency Metrics

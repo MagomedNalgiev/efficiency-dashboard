@@ -2,13 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
+import './index.css';
 import CalculatorVelocity from './components/CalculatorVelocity.jsx';
 import CalculatorCycleTime from './components/CalculatorCycleTime.jsx';
 import CalculatorMTTR from './components/CalculatorMTTR.jsx';
 import CalculatorDeploymentFrequency from './components/CalculatorDeploymentFrequency.jsx';
 import CalculatorDefectLeakage from './components/CalculatorDefectLeakage.jsx';
 import CalculatorCustomMetric from './components/CalculatorCustomMetric.jsx';
-import './index.css';
+import Header from './components/Header';
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
