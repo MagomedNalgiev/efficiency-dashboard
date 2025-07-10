@@ -35,6 +35,6 @@
     "@rollup/rollup-linux-x64-gnu": "4.44.2"
   },
   "engines": {
-    "node": ">=20.11.1"
+    "node": ">=18.17.0"
   }
 }
