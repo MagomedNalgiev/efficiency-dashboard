@@ -11,7 +11,6 @@ import CalculatorDefectLeakage from './components/CalculatorDefectLeakage.jsx';
 import CalculatorCustomMetric from './components/CalculatorCustomMetric.jsx';
 import Header from './components/Header';
 
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
