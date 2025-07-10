@@ -30,9 +30,10 @@
     "globals": "^16.2.0",
     "postcss": "^8.4.24",
     "tailwindcss": "^4.1.11",
-    "vite": "^5.2.8"
+    "vite": "^5.2.8",
+    "@rollup/rollup-linux-x64-gnu": "4.44.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11.1"
   }
 }
