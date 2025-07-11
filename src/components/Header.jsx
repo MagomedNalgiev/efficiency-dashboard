@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full bg-gray-900/80 backdrop-blur-md z-50 shadow">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
+      <div className="flex justify-between items-center w-full px-8 md:px-16">
         <Link
           to="/"
           className="text-lg font-semibold text-white hover:text-green-400 transition mb-2 md:mb-0"
         >
-          🚀 Efficiency Metrics
+          Efficiency Metrics
         </Link>
 
         <nav className="flex flex-wrap justify-center gap-3 md:gap-5">

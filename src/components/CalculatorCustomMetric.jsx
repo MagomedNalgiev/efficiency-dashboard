@@ -1,3 +1,4 @@
+import Header from "../components/Header";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import {
@@ -52,13 +53,17 @@ export default function CalculatorCustomMetric() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <h1 className="text-3xl font-bold text-purple-400 mb-4">✨ Калькулятор Custom Metric</h1>
-      <p className="text-gray-300 max-w-md text-center mb-6">
+    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16">
+      <Header />
+
+      <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
+        Калькулятор Custom Metric
+      </h1>
+      <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
         Введите метки (через запятую) и значения (через запятую), чтобы построить свой собственный график для анализа метрик.
       </p>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-xl mb-6">
         <label className="block mb-2 text-sm">Метки (через запятую):</label>
         <input
           type="text"
@@ -88,6 +93,10 @@ export default function CalculatorCustomMetric() {
           <Line data={data} />
         </div>
       )}
+
+      <footer className="mt-12 text-gray-400 text-sm">
+        © 2025 Efficiency Metrics. Все права защищены.
+      </footer>
     </div>
   );
 }

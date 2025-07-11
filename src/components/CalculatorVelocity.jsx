@@ -11,6 +11,8 @@ import {
   Legend,
 } from "chart.js";
 
+import Header from "../components/Header"; // проверь путь, если нужно
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -41,20 +43,24 @@ export default function CalculatorVelocity() {
       {
         label: "Velocity",
         data: Array.from({ length: sprints || 0 }, () => velocity || 0),
-        borderColor: "rgb(34,197,94)",
+        borderColor: "rgb(34,197,94)", // green
         backgroundColor: "rgba(34,197,94,0.3)",
       },
     ],
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <h1 className="text-3xl font-bold text-green-400 mb-4">🚀 Калькулятор Velocity</h1>
-      <p className="text-gray-300 max-w-md text-center mb-6">
+    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16">
+      <Header />
+
+      <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
+        Калькулятор Velocity
+      </h1>
+      <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
         Введите общее количество Story Points и количество спринтов, чтобы рассчитать среднюю Velocity команды.
       </p>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-md mb-6">
         <label className="block mb-2 text-sm">Общее количество Story Points:</label>
         <input
           type="number"
@@ -78,8 +84,9 @@ export default function CalculatorVelocity() {
           Рассчитать Velocity
         </button>
         {velocity && (
-          <p className="mt-4 text-lg text-center">
-            Средняя Velocity: <span className="text-green-400 font-semibold">{velocity}</span> story points/спринт
+          <p className="mt-4 text-lg">
+            Средняя Velocity:{" "}
+            <span className="text-green-400 font-semibold">{velocity}</span> story points/спринт
           </p>
         )}
       </div>
@@ -89,6 +96,10 @@ export default function CalculatorVelocity() {
           <Line data={data} />
         </div>
       )}
+
+      <footer className="mt-12 text-gray-400 text-sm">
+        © 2025 Efficiency Metrics. Все права защищены.
+      </footer>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import {
   Legend,
 } from "chart.js";
 
+import Header from "../components/Header"; // проверь путь
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -48,13 +50,17 @@ export default function CalculatorMTTR() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <h1 className="text-3xl font-bold text-red-400 mb-4">🛠️ Калькулятор MTTR</h1>
-      <p className="text-gray-300 max-w-md text-center mb-6">
+    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16">
+      <Header />
+
+      <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
+        Калькулятор MTTR
+      </h1>
+      <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
         Введите общее время простоя (в часах) и количество инцидентов, чтобы рассчитать средний MTTR (Mean Time To Recovery).
       </p>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-md mb-6">
         <label className="block mb-2 text-sm">Общее время простоя (часы):</label>
         <input
           type="number"
@@ -78,8 +84,9 @@ export default function CalculatorMTTR() {
           Рассчитать MTTR
         </button>
         {mttr && (
-          <p className="mt-4 text-lg text-center">
-            Средний MTTR: <span className="text-red-400 font-semibold">{mttr}</span> часов
+          <p className="mt-4 text-lg">
+            Средний MTTR:{" "}
+            <span className="text-red-400 font-semibold">{mttr}</span> часов
           </p>
         )}
       </div>
@@ -89,6 +96,10 @@ export default function CalculatorMTTR() {
           <Line data={data} />
         </div>
       )}
+
+      <footer className="mt-12 text-gray-400 text-sm">
+        © 2025 Efficiency Metrics. Все права защищены.
+      </footer>
     </div>
   );
 }

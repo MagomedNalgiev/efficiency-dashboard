@@ -21,21 +21,13 @@
 }
 
 body {
+  background:
+    linear-gradient(135deg, #0a3d62, #2980b9);
+  background-blend-mode: overlay;
   font-family: 'Inter', sans-serif;
-  padding-top: 60px;
-  margin: 0;
-  min-width: 320px;
   min-height: 100vh;
 
-  /* Синий-бирюзовый градиент + прозрачный шум */
-  background:
-    linear-gradient(135deg, #0f2027, #2193b0, #6dd5ed, #8e44ad),
-    url('https://transparenttextures.com/patterns/asfalt-dark.png');
-  background-blend-mode: overlay;
-
 }
-
-
 
 
 h1 {
