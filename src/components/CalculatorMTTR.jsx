@@ -50,7 +50,7 @@ export default function CalculatorMTTR() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16">
+    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
       <Header />
 
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
