@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header"; // проверь путь
+import Header from "../components/Header";
 
 ChartJS.register(
   CategoryScale,
@@ -24,29 +24,57 @@ ChartJS.register(
 );
 
 export default function CalculatorDefectLeakage() {
-  const [prodDefects, setProdDefects] = useState("");
-  const [totalDefects, setTotalDefects] = useState("");
-  const [defectLeakage, setDefectLeakage] = useState(null);
+  const [entries, setEntries] = useState([{ prodDefects: "", totalDefects: "" }]);
+  const [leakages, setLeakages] = useState([]);
 
-  const calculateDefectLeakage = () => {
-    if (totalDefects > 0) {
-      const result = ((prodDefects / totalDefects) * 100).toFixed(2);
-      setDefectLeakage(result);
-    } else {
-      setDefectLeakage(null);
-    }
+  const handleChange = (index, field, value) => {
+    const updated = [...entries];
+    updated[index][field] = value;
+    setEntries(updated);
+  };
+
+  const addEntry = () => {
+    setEntries([...entries, { prodDefects: "", totalDefects: "" }]);
+  };
+
+  const calculateLeakages = () => {
+    const results = entries.map(({ prodDefects, totalDefects }) => {
+      const prod = parseFloat(prodDefects);
+      const total = parseFloat(totalDefects);
+      if (!isNaN(prod) && !isNaN(total) && total > 0) {
+        return ((prod / total) * 100).toFixed(2);
+      }
+      return 0;
+    });
+    setLeakages(results);
   };
 
   const data = {
-    labels: ["Defect Leakage %"],
+    labels: entries.map((_, i) => `Наблюдение ${i + 1}`),
     datasets: [
       {
-        label: "Defect Leakage %",
-        data: [defectLeakage || 0],
-        borderColor: "rgb(245,158,11)", // amber
+        label: "Defect Leakage (%)",
+        data: leakages,
+        borderColor: "rgb(245,158,11)",
         backgroundColor: "rgba(245,158,11,0.3)",
       },
     ],
+  };
+
+  const options = {
+    plugins: {
+      legend: {
+        labels: { color: "#ffffff" },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: "#ffffff" },
+      },
+      y: {
+        ticks: { color: "#ffffff" },
+      },
+    },
   };
 
   return (
@@ -57,43 +85,50 @@ export default function CalculatorDefectLeakage() {
         Калькулятор Defect Leakage
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Введите количество дефектов, обнаруженных в продакшене, и общее количество дефектов, чтобы рассчитать процент Defect Leakage.
+        Введите значения по каждой итерации, чтобы рассчитать и визуализировать процент Defect Leakage.
       </p>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-md mb-6">
-        <label className="block mb-2 text-sm">Количество дефектов в продакшене:</label>
-        <input
-          type="number"
-          value={prodDefects}
-          onChange={(e) => setProdDefects(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 5"
-        />
-        <label className="block mb-2 text-sm">Общее количество дефектов (QA + Прод):</label>
-        <input
-          type="number"
-          value={totalDefects}
-          onChange={(e) => setTotalDefects(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 50"
-        />
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
+        {entries.map((entry, index) => (
+          <div key={index} className="mb-6">
+            <h3 className="text-white font-semibold mb-2">Наблюдение {index + 1}</h3>
+            <label className="block mb-2 text-sm">Дефекты в продакшене:</label>
+            <input
+              type="number"
+              value={entry.prodDefects}
+              onChange={(e) => handleChange(index, "prodDefects", e.target.value)}
+              className="w-full p-2 mb-2 rounded text-black"
+              placeholder="Например: 5"
+            />
+            <label className="block mb-2 text-sm">Общее количество дефектов:</label>
+            <input
+              type="number"
+              value={entry.totalDefects}
+              onChange={(e) => handleChange(index, "totalDefects", e.target.value)}
+              className="w-full p-2 rounded text-black"
+              placeholder="Например: 50"
+            />
+          </div>
+        ))}
+
         <button
-          onClick={calculateDefectLeakage}
+          onClick={addEntry}
+          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
+        >
+          ➕ Добавить наблюдение
+        </button>
+
+        <button
+          onClick={calculateLeakages}
           className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded w-full"
         >
           Рассчитать Defect Leakage
         </button>
-        {defectLeakage && (
-          <p className="mt-4 text-lg">
-            Defect Leakage:{" "}
-            <span className="text-amber-400 font-semibold">{defectLeakage}%</span>
-          </p>
-        )}
       </div>
 
-      {defectLeakage && (
-        <div className="mt-8 w-full max-w-md">
-          <Line data={data} />
+      {leakages.length > 0 && (
+        <div className="mt-8 w-full max-w-2xl">
+          <Line data={data} options={options} />
         </div>
       )}
 

@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header"; // проверь путь
+import Header from "../components/Header";
 
 ChartJS.register(
   CategoryScale,
@@ -24,29 +24,61 @@ ChartJS.register(
 );
 
 export default function CalculatorMTTR() {
-  const [totalDowntime, setTotalDowntime] = useState("");
-  const [incidents, setIncidents] = useState("");
-  const [mttr, setMTTR] = useState(null);
+  const [incidents, setIncidents] = useState([{ hours: "" }]);
+  const [average, setAverage] = useState(null);
 
-  const calculateMTTR = () => {
-    if (incidents > 0) {
-      const result = (totalDowntime / incidents).toFixed(2);
-      setMTTR(result);
+  const handleChange = (index, value) => {
+    const updated = [...incidents];
+    updated[index].hours = value;
+    setIncidents(updated);
+  };
+
+  const addIncident = () => {
+    setIncidents([...incidents, { hours: "" }]);
+  };
+
+  const calculateAverage = () => {
+    const values = incidents.map((i) => parseFloat(i.hours)).filter((v) => !isNaN(v));
+    if (values.length > 0) {
+      const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+      setAverage(avg);
     } else {
-      setMTTR(null);
+      setAverage(null);
     }
   };
 
   const data = {
-    labels: Array.from({ length: incidents || 0 }, (_, i) => `Инцидент ${i + 1}`),
+    labels: incidents.map((_, i) => `Инцидент ${i + 1}`),
     datasets: [
       {
         label: "MTTR (часы)",
-        data: Array.from({ length: incidents || 0 }, () => mttr || 0),
-        borderColor: "rgb(239,68,68)", // red
+        data: incidents.map((i) => parseFloat(i.hours) || 0),
+        borderColor: "rgb(239,68,68)",
         backgroundColor: "rgba(239,68,68,0.3)",
       },
     ],
+  };
+
+  const options = {
+    plugins: {
+      legend: {
+        labels: {
+          color: "#ffffff",
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+      y: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+    },
   };
 
   return (
@@ -57,43 +89,50 @@ export default function CalculatorMTTR() {
         Калькулятор MTTR
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Введите общее время простоя (в часах) и количество инцидентов, чтобы рассчитать средний MTTR (Mean Time To Recovery).
+        Укажите длительность восстановления (в часах) по каждому инциденту, чтобы рассчитать средний MTTR и построить график.
       </p>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-md mb-6">
-        <label className="block mb-2 text-sm">Общее время простоя (часы):</label>
-        <input
-          type="number"
-          value={totalDowntime}
-          onChange={(e) => setTotalDowntime(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 48"
-        />
-        <label className="block mb-2 text-sm">Количество инцидентов:</label>
-        <input
-          type="number"
-          value={incidents}
-          onChange={(e) => setIncidents(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 6"
-        />
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
+        {incidents.map((incident, index) => (
+          <div key={index} className="mb-4">
+            <label className="block mb-1 text-sm text-white">
+              Инцидент {index + 1} — время восстановления (часы):
+            </label>
+            <input
+              type="number"
+              value={incident.hours}
+              onChange={(e) => handleChange(index, e.target.value)}
+              className="w-full p-2 rounded text-black"
+              placeholder="Например: 4"
+            />
+          </div>
+        ))}
+
         <button
-          onClick={calculateMTTR}
+          onClick={addIncident}
+          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
+        >
+          ➕ Добавить инцидент
+        </button>
+
+        <button
+          onClick={calculateAverage}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded w-full"
         >
           Рассчитать MTTR
         </button>
-        {mttr && (
-          <p className="mt-4 text-lg">
+
+        {average && (
+          <p className="mt-4 text-lg text-white">
             Средний MTTR:{" "}
-            <span className="text-red-400 font-semibold">{mttr}</span> часов
+            <span className="text-red-400 font-semibold">{average}</span> часов
           </p>
         )}
       </div>
 
-      {mttr && (
+      {average && (
         <div className="mt-8 w-full max-w-2xl">
-          <Line data={data} />
+          <Line data={data} options={options} />
         </div>
       )}
 

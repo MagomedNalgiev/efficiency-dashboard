@@ -46,10 +46,32 @@ export default function CalculatorCustomMetric() {
       {
         label: "Custom Metric",
         data: parsedValues,
-        borderColor: "rgb(147,51,234)", // purple
+        borderColor: "rgb(147,51,234)",
         backgroundColor: "rgba(147,51,234,0.3)",
       },
     ],
+  };
+
+  const options = {
+    plugins: {
+      legend: {
+        labels: {
+          color: "#ffffff",
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+      y: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+    },
   };
 
   return (
@@ -90,7 +112,7 @@ export default function CalculatorCustomMetric() {
 
       {parsedLabels.length > 0 && (
         <div className="mt-8 w-full max-w-2xl">
-          <Line data={data} />
+          <Line data={data} options={options} />
         </div>
       )}
 

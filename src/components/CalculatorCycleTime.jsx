@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header"; // путь подкорректируй при необходимости
+import Header from "../components/Header";
 
 ChartJS.register(
   CategoryScale,
@@ -24,29 +24,61 @@ ChartJS.register(
 );
 
 export default function CalculatorCycleTime() {
-  const [totalDays, setTotalDays] = useState("");
-  const [completedTasks, setCompletedTasks] = useState("");
-  const [cycleTime, setCycleTime] = useState(null);
+  const [tasks, setTasks] = useState([{ days: "" }]);
+  const [average, setAverage] = useState(null);
 
-  const calculateCycleTime = () => {
-    if (completedTasks > 0) {
-      const result = (totalDays / completedTasks).toFixed(2);
-      setCycleTime(result);
+  const handleChange = (index, value) => {
+    const updated = [...tasks];
+    updated[index].days = value;
+    setTasks(updated);
+  };
+
+  const addTask = () => {
+    setTasks([...tasks, { days: "" }]);
+  };
+
+  const calculateAverage = () => {
+    const values = tasks.map((t) => parseFloat(t.days)).filter((v) => !isNaN(v));
+    if (values.length > 0) {
+      const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+      setAverage(avg);
     } else {
-      setCycleTime(null);
+      setAverage(null);
     }
   };
 
   const data = {
-    labels: Array.from({ length: completedTasks || 0 }, (_, i) => `Задача ${i + 1}`),
+    labels: tasks.map((_, i) => `Задача ${i + 1}`),
     datasets: [
       {
         label: "Cycle Time (дни)",
-        data: Array.from({ length: completedTasks || 0 }, () => cycleTime || 0),
+        data: tasks.map((t) => parseFloat(t.days) || 0),
         borderColor: "rgb(59,130,246)",
         backgroundColor: "rgba(59,130,246,0.3)",
       },
     ],
+  };
+
+  const options = {
+    plugins: {
+      legend: {
+        labels: {
+          color: "#ffffff",
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+      y: {
+        ticks: {
+          color: "#ffffff",
+        },
+      },
+    },
   };
 
   return (
@@ -57,43 +89,50 @@ export default function CalculatorCycleTime() {
         Калькулятор Cycle Time
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Введите общее количество дней работы над задачами и количество завершённых задач, чтобы рассчитать средний Cycle Time.
+        Укажите количество дней на выполнение каждой задачи, чтобы рассчитать средний Cycle Time и визуализировать данные.
       </p>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-md mb-6">
-        <label className="block mb-2 text-sm">Общее количество дней:</label>
-        <input
-          type="number"
-          value={totalDays}
-          onChange={(e) => setTotalDays(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 30"
-        />
-        <label className="block mb-2 text-sm">Количество завершённых задач:</label>
-        <input
-          type="number"
-          value={completedTasks}
-          onChange={(e) => setCompletedTasks(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
-          placeholder="Например: 15"
-        />
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
+        {tasks.map((task, index) => (
+          <div key={index} className="mb-4">
+            <label className="block mb-1 text-sm text-white">
+              Задача {index + 1} — дней:
+            </label>
+            <input
+              type="number"
+              value={task.days}
+              onChange={(e) => handleChange(index, e.target.value)}
+              className="w-full p-2 rounded text-black"
+              placeholder="Например: 5"
+            />
+          </div>
+        ))}
+
         <button
-          onClick={calculateCycleTime}
+          onClick={addTask}
+          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
+        >
+          ➕ Добавить задачу
+        </button>
+
+        <button
+          onClick={calculateAverage}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
         >
           Рассчитать Cycle Time
         </button>
-        {cycleTime && (
-          <p className="mt-4 text-lg">
+
+        {average && (
+          <p className="mt-4 text-lg text-white">
             Средний Cycle Time:{" "}
-            <span className="text-blue-400 font-semibold">{cycleTime}</span> дней/задачу
+            <span className="text-blue-400 font-semibold">{average}</span> дней
           </p>
         )}
       </div>
 
-      {cycleTime && (
+      {average && (
         <div className="mt-8 w-full max-w-2xl">
-          <Line data={data} />
+          <Line data={data} options={options} />
         </div>
       )}
 
