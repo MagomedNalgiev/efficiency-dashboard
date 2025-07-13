@@ -30,7 +30,7 @@ function App() {
 
       {/* Категория: Custom */}
       <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">⚙Прочее</h2>
+        <h2 className="text-2xl font-bold mb-4 text-white">Прочее</h2>
         <div className="grid md:grid-cols-3 gap-6">
           <Card title="Custom Metric" description="Добавить свою метрику" to="/custommetric" />
         </div>

@@ -34,45 +34,44 @@ export default function Layout() {
         </nav>
       </aside>
 
-      {/* Верхняя панель */}
-      <header className="fixed top-0 left-0 w-full bg-gray-900/80 backdrop-blur-md z-50 shadow">
-        <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleMenu}
-              className="text-white hover:text-green-400 text-xl transition z-50"
-            >
-              {menuOpen ? "✕" : "☰"}
-            </button>
-            <Link
-              to="/"
-              className="text-lg font-semibold text-white hover:text-green-400 transition"
-            >
-              Efficiency Metrics
-            </Link>
+      {/* Обертка для header + main с отступом */}
+      <div className={`transition-all duration-300 ${menuOpen ? "md:pl-64" : "md:pl-0"}`}>
+        {/* Верхняя панель */}
+        <header className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 shadow">
+          <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleMenu}
+                className="text-white hover:text-green-400 text-xl transition z-50"
+              >
+                {menuOpen ? "✕" : "☰"}
+              </button>
+              <Link
+                to="/"
+                className="text-lg font-semibold text-white hover:text-green-400 transition"
+              >
+                Efficiency Metrics
+              </Link>
+            </div>
+
+            <nav className="hidden md:flex flex-wrap justify-center gap-5">
+              <Link to="/velocity" className="text-gray-300 hover:text-green-400 transition">Velocity</Link>
+              <Link to="/cycletime" className="text-gray-300 hover:text-blue-400 transition">Cycle Time</Link>
+              <Link to="/deploymentfrequency" className="text-gray-300 hover:text-green-400 transition">Deployment</Link>
+              <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link>
+              <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link>
+              <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link>
+            </nav>
           </div>
+        </header>
 
-          <nav className="hidden md:flex flex-wrap justify-center gap-5">
-            <Link to="/velocity" className="text-gray-300 hover:text-green-400 transition">Velocity</Link>
-            <Link to="/cycletime" className="text-gray-300 hover:text-blue-400 transition">Cycle Time</Link>
-            <Link to="/deploymentfrequency" className="text-gray-300 hover:text-green-400 transition">Deployment</Link>
-            <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link>
-            <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link>
-            <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Контент */}
-      <main
-        className={`pt-24 pb-8 w-full transition-all duration-300 ${
-          menuOpen ? "md:pl-64" : "md:pl-0"
-        }`}
-      >
-        <div className="pl-8 md:pl-16 pr-4">
-          <Outlet />
-        </div>
-      </main>
+        {/* Контент */}
+        <main className="pt-24 pb-8 w-full">
+          <div className="pl-8 md:pl-16 pr-4">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

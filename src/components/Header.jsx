@@ -10,7 +10,7 @@ export default function Header() {
   return (
     <>
       <header className="fixed top-0 left-0 w-full bg-gray-900/80 backdrop-blur-md z-40 shadow">
-        <div className="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 w-full">
           {/* Левая часть: бургер + логотип */}
           <div className="flex items-center gap-4">
             <button
