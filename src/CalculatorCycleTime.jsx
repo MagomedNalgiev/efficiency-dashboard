@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header";
+import Header from "../Header";
 
 ChartJS.register(
   CategoryScale,
@@ -23,27 +23,24 @@ ChartJS.register(
   Legend
 );
 
-export default function CalculatorDeploymentFrequency() {
-  const [deploys, setDeploys] = useState([{ daysBetween: "" }]);
+export default function CalculatorCycleTime() {
+  const [tasks, setTasks] = useState([{ days: "" }]);
   const [average, setAverage] = useState(null);
 
   const handleChange = (index, value) => {
-    const updated = [...deploys];
-    updated[index].daysBetween = value;
-    setDeploys(updated);
+    const updated = [...tasks];
+    updated[index].days = value;
+    setTasks(updated);
   };
 
-  const addDeploy = () => {
-    setDeploys([...deploys, { daysBetween: "" }]);
+  const addTask = () => {
+    setTasks([...tasks, { days: "" }]);
   };
 
   const calculateAverage = () => {
-    const values = deploys.map((d) => parseFloat(d.daysBetween)).filter((v) => !isNaN(v) && v > 0);
+    const values = tasks.map((t) => parseFloat(t.days)).filter((v) => !isNaN(v));
     if (values.length > 0) {
-      const freqs = values.map((d) => +(1 / d).toFixed(3)); // деплоев в день
-      const avg = (
-        freqs.reduce((acc, val) => acc + val, 0) / freqs.length
-      ).toFixed(3);
+      const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
       setAverage(avg);
     } else {
       setAverage(null);
@@ -51,17 +48,13 @@ export default function CalculatorDeploymentFrequency() {
   };
 
   const data = {
-    labels: deploys.map((_, i) => `Деплой ${i + 1}`),
+    labels: tasks.map((_, i) => `Задача ${i + 1}`),
     datasets: [
       {
-        label: "Деплоев в день",
-        data: deploys.map((d) =>
-          d.daysBetween && parseFloat(d.daysBetween) > 0
-            ? +(1 / parseFloat(d.daysBetween)).toFixed(3)
-            : 0
-        ),
-        borderColor: "rgb(34,197,94)",
-        backgroundColor: "rgba(34,197,94,0.3)",
+        label: "Cycle Time (дни)",
+        data: tasks.map((t) => parseFloat(t.days) || 0),
+        borderColor: "rgb(59,130,246)",
+        backgroundColor: "rgba(59,130,246,0.3)",
       },
     ],
   };
@@ -69,15 +62,21 @@ export default function CalculatorDeploymentFrequency() {
   const options = {
     plugins: {
       legend: {
-        labels: { color: "#ffffff" },
+        labels: {
+          color: "#ffffff",
+        },
       },
     },
     scales: {
       x: {
-        ticks: { color: "#ffffff" },
+        ticks: {
+          color: "#ffffff",
+        },
       },
       y: {
-        ticks: { color: "#ffffff" },
+        ticks: {
+          color: "#ffffff",
+        },
       },
     },
   };
@@ -86,46 +85,46 @@ export default function CalculatorDeploymentFrequency() {
     <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
 
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        Калькулятор Deployment Frequency
+        Калькулятор Cycle Time
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Укажите количество дней между каждым деплоем, чтобы рассчитать среднюю частоту деплоев и построить график.
+        Укажите количество дней на выполнение каждой задачи, чтобы рассчитать средний Cycle Time и визуализировать данные.
       </p>
 
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {deploys.map((deploy, index) => (
+        {tasks.map((task, index) => (
           <div key={index} className="mb-4">
             <label className="block mb-1 text-sm text-white">
-              Деплой {index + 1} — дней между деплоем и предыдущим:
+              Задача {index + 1} — дней:
             </label>
             <input
               type="number"
-              value={deploy.daysBetween}
+              value={task.days}
               onChange={(e) => handleChange(index, e.target.value)}
               className="w-full p-2 rounded text-black"
-              placeholder="Например: 2"
+              placeholder="Например: 5"
             />
           </div>
         ))}
 
         <button
-          onClick={addDeploy}
+          onClick={addTask}
           className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
         >
-          ➕ Добавить деплой
+          ➕ Добавить задачу
         </button>
 
         <button
           onClick={calculateAverage}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
         >
-          Рассчитать частоту
+          Рассчитать Cycle Time
         </button>
 
         {average && (
           <p className="mt-4 text-lg text-white">
-            Средняя частота деплоев:{" "}
-            <span className="text-green-400 font-semibold">{average}</span> в день
+            Средний Cycle Time:{" "}
+            <span className="text-blue-400 font-semibold">{average}</span> дней
           </p>
         )}
       </div>
