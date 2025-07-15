@@ -3,14 +3,14 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 
-import Layout from './components/Layout';
+import Layout from './Layout';
 import App from './App.jsx';
-import CalculatorVelocity from './components/CalculatorVelocity.jsx';
-import CalculatorCycleTime from './components/CalculatorCycleTime.jsx';
-import CalculatorMTTR from './components/CalculatorMTTR.jsx';
-import CalculatorDeploymentFrequency from './components/CalculatorDeploymentFrequency.jsx';
-import CalculatorDefectLeakage from './components/CalculatorDefectLeakage.jsx';
-import CalculatorCustomMetric from './components/CalculatorCustomMetric.jsx';
+import CalculatorVelocity from './CalculatorVelocity.jsx';
+import CalculatorCycleTime from './CalculatorCycleTime.jsx';
+import CalculatorMTTR from './CalculatorMTTR.jsx';
+import CalculatorDeploymentFrequency from './CalculatorDeploymentFrequency.jsx';
+import CalculatorDefectLeakage from './CalculatorDefectLeakage.jsx';
+import CalculatorCustomMetric from './CalculatorCustomMetric.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

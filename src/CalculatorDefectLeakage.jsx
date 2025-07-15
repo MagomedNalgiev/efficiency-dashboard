@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header";
+import Header from "../Header";
 
 ChartJS.register(
   CategoryScale,
