@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header";
+import Header from "../Header";
 
 ChartJS.register(
   CategoryScale,
@@ -23,22 +23,22 @@ ChartJS.register(
   Legend
 );
 
-export default function CalculatorCycleTime() {
-  const [tasks, setTasks] = useState([{ days: "" }]);
+export default function CalculatorMTTR() {
+  const [incidents, setIncidents] = useState([{ hours: "" }]);
   const [average, setAverage] = useState(null);
 
   const handleChange = (index, value) => {
-    const updated = [...tasks];
-    updated[index].days = value;
-    setTasks(updated);
+    const updated = [...incidents];
+    updated[index].hours = value;
+    setIncidents(updated);
   };
 
-  const addTask = () => {
-    setTasks([...tasks, { days: "" }]);
+  const addIncident = () => {
+    setIncidents([...incidents, { hours: "" }]);
   };
 
   const calculateAverage = () => {
-    const values = tasks.map((t) => parseFloat(t.days)).filter((v) => !isNaN(v));
+    const values = incidents.map((i) => parseFloat(i.hours)).filter((v) => !isNaN(v));
     if (values.length > 0) {
       const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
       setAverage(avg);
@@ -48,13 +48,13 @@ export default function CalculatorCycleTime() {
   };
 
   const data = {
-    labels: tasks.map((_, i) => `Задача ${i + 1}`),
+    labels: incidents.map((_, i) => `Инцидент ${i + 1}`),
     datasets: [
       {
-        label: "Cycle Time (дни)",
-        data: tasks.map((t) => parseFloat(t.days) || 0),
-        borderColor: "rgb(59,130,246)",
-        backgroundColor: "rgba(59,130,246,0.3)",
+        label: "MTTR (часы)",
+        data: incidents.map((i) => parseFloat(i.hours) || 0),
+        borderColor: "rgb(239,68,68)",
+        backgroundColor: "rgba(239,68,68,0.3)",
       },
     ],
   };
@@ -85,46 +85,46 @@ export default function CalculatorCycleTime() {
     <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
 
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        Калькулятор Cycle Time
+        Калькулятор MTTR
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Укажите количество дней на выполнение каждой задачи, чтобы рассчитать средний Cycle Time и визуализировать данные.
+        Укажите длительность восстановления (в часах) по каждому инциденту, чтобы рассчитать средний MTTR и построить график.
       </p>
 
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {tasks.map((task, index) => (
+        {incidents.map((incident, index) => (
           <div key={index} className="mb-4">
             <label className="block mb-1 text-sm text-white">
-              Задача {index + 1} — дней:
+              Инцидент {index + 1} — время восстановления (часы):
             </label>
             <input
               type="number"
-              value={task.days}
+              value={incident.hours}
               onChange={(e) => handleChange(index, e.target.value)}
               className="w-full p-2 rounded text-black"
-              placeholder="Например: 5"
+              placeholder="Например: 4"
             />
           </div>
         ))}
 
         <button
-          onClick={addTask}
+          onClick={addIncident}
           className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
         >
-          ➕ Добавить задачу
+          ➕ Добавить инцидент
         </button>
 
         <button
           onClick={calculateAverage}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded w-full"
         >
-          Рассчитать Cycle Time
+          Рассчитать MTTR
         </button>
 
         {average && (
           <p className="mt-4 text-lg text-white">
-            Средний Cycle Time:{" "}
-            <span className="text-blue-400 font-semibold">{average}</span> дней
+            Средний MTTR:{" "}
+            <span className="text-red-400 font-semibold">{average}</span> часов
           </p>
         )}
       </div>
