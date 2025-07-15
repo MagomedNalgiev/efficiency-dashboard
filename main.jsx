@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 
-import Layout from './Layout';
+import Layout from './Layout.jsx';
 import App from './App.jsx';
 import CalculatorVelocity from './CalculatorVelocity.jsx';
 import CalculatorCycleTime from './CalculatorCycleTime.jsx';
