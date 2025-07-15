@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://metricspace.ru/</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/velocity</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/cycletime</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/mttr</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/deploymentfrequency</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/defectleakage</loc>
+  </url>
+  <url>
+    <loc>https://metricspace.ru/custommetric</loc>
+  </url>
+</urlset>
