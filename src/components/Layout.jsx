@@ -50,7 +50,7 @@ export default function Layout() {
                 to="/"
                 className="text-lg font-semibold text-white hover:text-green-400 transition"
               >
-                Efficiency Metrics
+                Metricspace
               </Link>
             </div>
 

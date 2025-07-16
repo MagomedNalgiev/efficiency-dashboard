@@ -17,14 +17,14 @@ export default function Header() {
               onClick={toggleMenu}
               className="text-white text-xl hover:text-green-400 transition border border-white/30 rounded px-2 py-1"
             >
-              {menuOpen ? "✕" : "☰"}
+              {menuOpen ? "x" : "☰"}
             </button>
 
             <Link
               to="/"
               className="text-lg font-semibold text-white hover:text-green-400 transition"
             >
-              Efficiency Metrics
+              Metricspace
             </Link>
           </div>
 

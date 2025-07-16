@@ -137,7 +137,7 @@ export default function CalculatorDeploymentFrequency() {
       )}
 
       <footer className="mt-12 text-gray-400 text-sm">
-        © 2025 Efficiency Metrics. Все права защищены.
+        © 2025 Metricspace
       </footer>
     </div>
   );
