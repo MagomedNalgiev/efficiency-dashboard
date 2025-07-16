@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 
 function App() {
   return (
-    <div className="min-h-screen w-full px-6 md:px-16 pt-24 pb-12 bg-gray-900 text-white">
+    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
       <h1 className="text-5xl md:text-6xl font-extrabold mb-4">Metricspace</h1>
       <p className="text-lg md:text-xl leading-relaxed max-w-3xl mb-8 text-gray-300">
         Быстрый расчёт и визуализация метрик эффективности IT-команд: Velocity, Cycle Time, MTTR, Deployment Frequency и других.
-        Рассчитывайте, стройте графики, выгружайте отчёты и улучшайте производительность вашей команды.
+        Рассчитывайте, стройте графики и улучшайте производительность вашей команды.
       </p>
 
       {/* Категория: Delivery */}

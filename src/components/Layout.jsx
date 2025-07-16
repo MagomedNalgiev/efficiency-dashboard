@@ -1,3 +1,4 @@
+import '../index.css';
 import Header from './Header';
 import { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
@@ -40,12 +41,19 @@ export default function Layout() {
         <header className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 shadow">
           <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
             <div className="flex items-center gap-4">
-              <button
-                onClick={toggleMenu}
-                className="text-white hover:text-green-400 text-xl transition z-50"
-              >
-                {menuOpen ? "✕" : "☰"}
-              </button>
+              <div className="relative z-50 scale-60">
+                <input
+                  id="burger-toggle"
+                  type="checkbox"
+                  checked={menuOpen}
+                  onChange={toggleMenu}
+                  className="burger-checkbox"
+                />
+                <label htmlFor="burger-toggle" className="burger">
+                  <span></span>
+                </label>
+              </div>
+
               <Link
                 to="/"
                 className="text-lg font-semibold text-white hover:text-green-400 transition"

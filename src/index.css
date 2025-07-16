@@ -52,3 +52,56 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.burger-checkbox {
+  position: absolute;
+  visibility: hidden;
+}
+
+.burger {
+  cursor: pointer;
+  display: block;
+  position: relative;
+  width: 32px;
+  height: 24px;
+}
+
+.burger span,
+.burger::before,
+.burger::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 4px;
+  background: white;
+  transition: 0.3s ease-in-out;
+}
+
+.burger span {
+  top: 10px;
+}
+
+.burger::before {
+  top: 0;
+}
+
+.burger::after {
+  bottom: 0;
+}
+
+.burger-checkbox:checked + .burger::before {
+  top: 10px;
+  transform: rotate(45deg);
+}
+
+.burger-checkbox:checked + .burger::after {
+  bottom: 10px;
+  transform: rotate(-45deg);
+}
+
+.burger-checkbox:checked + .burger span {
+  transform: scale(0);
+}
+
+
