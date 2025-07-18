@@ -78,7 +78,7 @@ export default function CalculatorDefectLeakage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
+    <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
 
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
         Калькулятор Defect Leakage
