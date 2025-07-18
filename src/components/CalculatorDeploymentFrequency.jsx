@@ -102,7 +102,7 @@ export default function CalculatorDeploymentFrequency() {
               type="number"
               value={deploy.daysBetween}
               onChange={(e) => handleChange(index, e.target.value)}
-              className="w-full p-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 2"
             />
           </div>

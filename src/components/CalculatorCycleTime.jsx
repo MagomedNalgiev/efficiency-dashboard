@@ -101,7 +101,7 @@ export default function CalculatorCycleTime() {
               type="number"
               value={task.days}
               onChange={(e) => handleChange(index, e.target.value)}
-              className="w-full p-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 5"
             />
           </div>

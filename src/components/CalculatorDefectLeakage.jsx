@@ -96,7 +96,7 @@ export default function CalculatorDefectLeakage() {
               type="number"
               value={entry.prodDefects}
               onChange={(e) => handleChange(index, "prodDefects", e.target.value)}
-              className="w-full p-2 mb-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 5"
             />
             <label className="block mb-2 text-sm">Общее количество дефектов:</label>
@@ -104,7 +104,7 @@ export default function CalculatorDefectLeakage() {
               type="number"
               value={entry.totalDefects}
               onChange={(e) => handleChange(index, "totalDefects", e.target.value)}
-              className="w-full p-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 50"
             />
           </div>

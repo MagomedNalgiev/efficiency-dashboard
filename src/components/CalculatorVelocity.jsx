@@ -112,7 +112,7 @@ export default function CalculatorVelocity() {
               onChange={(e) =>
                 handleChange(index, "storyPoints", e.target.value)
               }
-              className="w-full p-2 mb-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 30"
             />
             <label className="block mb-2 text-sm">Focus-фактор (%):</label>
@@ -122,7 +122,7 @@ export default function CalculatorVelocity() {
               onChange={(e) =>
                 handleChange(index, "focusFactor", e.target.value)
               }
-              className="w-full p-2 rounded text-black"
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
               placeholder="Например: 90"
             />
           </div>

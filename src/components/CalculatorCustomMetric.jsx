@@ -90,7 +90,7 @@ export default function CalculatorCustomMetric() {
           type="text"
           value={labels}
           onChange={(e) => setLabels(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
+          className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
           placeholder="Например: Январь, Февраль, Март"
         />
         <label className="block mb-2 text-sm">Значения (через запятую):</label>
@@ -98,7 +98,7 @@ export default function CalculatorCustomMetric() {
           type="text"
           value={values}
           onChange={(e) => setValues(e.target.value)}
-          className="w-full p-2 mb-4 rounded text-black"
+          className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
           placeholder="Например: 10, 20, 30"
         />
         <button
