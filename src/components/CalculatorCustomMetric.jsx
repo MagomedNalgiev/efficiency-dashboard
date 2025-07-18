@@ -84,7 +84,7 @@ export default function CalculatorCustomMetric() {
         Введите метки (через запятую) и значения (через запятую), чтобы построить свой собственный график для анализа метрик.
       </p>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-xl mb-6">
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
         <label className="block mb-2 text-sm">Метки (через запятую):</label>
         <input
           type="text"
