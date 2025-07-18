@@ -75,7 +75,7 @@ export default function Layout() {
 
         {/* Контент */}
         <main className="pt-24 pb-8 w-full">
-          <div className="pl-8 md:pl-16 pr-4">
+          <div className="px-4 sm:px-6 md:px-16">
             <Outlet />
           </div>
         </main>
