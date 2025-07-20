@@ -19,13 +19,12 @@
 }
 
 body {
-  background:
-    linear-gradient(135deg, #0a3d62, #2980b9);
-  background-blend-mode: overlay;
+  background-color: #111827; /* тот самый gray-900 */
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
-
+  margin: 0;
 }
+
 
 
 h1 {
