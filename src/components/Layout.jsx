@@ -12,7 +12,7 @@ export default function Layout() {
     <div className="min-h-screen w-full bg-gray-900 text-white">
       {/* Сайдбар */}
       <aside
-        className={`fixed top-0 left-0 h-full w-56 md:w-64 bg-gray-900 z-40 shadow-lg pt-20 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-56 md:w-64 bg-black z-40 shadow-lg pt-20 transform transition-transform duration-300 ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -38,7 +38,7 @@ export default function Layout() {
       {/* Обертка для header + main с отступом */}
       <div className={`transition-all duration-300 ${menuOpen ? "md:pl-64" : "md:pl-0"}`}>
         {/* Верхняя панель */}
-        <header className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 shadow">
+        <header className="fixed top-0 left-0 right-0 bg-black backdrop-blur-md z-50 shadow">
           <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
             <div className="flex items-center gap-4">
               <div className="relative z-50 scale-60">
