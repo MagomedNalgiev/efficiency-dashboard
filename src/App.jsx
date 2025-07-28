@@ -28,6 +28,16 @@ function App() {
         </div>
       </div>
 
+      {/* Категория: Маркетинг */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-4 text-white">Маркетинг</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card title="CAC" description="Стоимость привлечения клиента" to="/cac" />
+          <Card title="ROMI" description="Коэффициент возврата инвестиций в маркетинг" to="/romi" />
+          <Card title="LTV" description="Пожизненная ценность клиента" to="/ltv" />
+        </div>
+      </div>
+
       {/* Категория: Custom */}
       <div className="mb-10">
         <h2 className="text-2xl font-bold mb-4 text-white">Прочее</h2>

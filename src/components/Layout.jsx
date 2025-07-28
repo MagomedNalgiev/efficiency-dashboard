@@ -29,9 +29,16 @@ export default function Layout() {
             <Link to="/mttr" className="block hover:text-red-400">MTTR</Link>
           </div>
           <div>
+            <h3 className="text-sm text-gray-400 uppercase mb-2">Маркетинг</h3>
+            <Link to="/cac" className="block hover:text-pink-400">CAC</Link>
+            <Link to="/romi" className="block hover:text-pink-400">ROMI</Link>
+            <Link to="/ltv" className="block hover:text-pink-400">LTV</Link>
+          </div>
+          <div>
             <h3 className="text-sm text-gray-400 uppercase mb-2">Прочее</h3>
             <Link to="/custommetric" className="block hover:text-purple-400">Custom Metric</Link>
           </div>
+
         </nav>
       </aside>
 
@@ -69,6 +76,8 @@ export default function Layout() {
               <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link>
               <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link>
               <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link>
+              <Link to="/cac" className="text-gray-300 hover:text-purple-400 transition">CAC</Link>
+
             </nav>
           </div>
         </header>
