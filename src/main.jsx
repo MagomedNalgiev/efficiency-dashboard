@@ -14,6 +14,11 @@ import CalculatorCustomMetric from './components/CalculatorCustomMetric.jsx';
 import CalculatorCAC from "./components/CalculatorCAC";
 import CalculatorROMI from "./components/CalculatorROMI";
 import CalculatorLTV from "./components/CalculatorLTV";
+import CalculatorEBITDA from "./components/CalculatorEBITDA";
+import CalculatorROS from "./components/CalculatorROS";
+import CalculatorBEP from "./components/CalculatorBEP";
+
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -31,6 +36,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/cac" element={<CalculatorCAC />} />
           <Route path="/romi" element={<CalculatorROMI />} />
           <Route path="/ltv" element={<CalculatorLTV />} />
+          <Route path="/ebitda" element={<CalculatorEBITDA />} />
+          <Route path="/ros" element={<CalculatorROS />} />
+          <Route path="/bep" element={<CalculatorBEP />} />
+
+
 
         </Route>
       </Routes>

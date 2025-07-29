@@ -21,26 +21,27 @@ ChartJS.register(
   Legend
 );
 
-export default function CalculatorLTV() {
-  const [ltvData, setLtvData] = useState([{ arpu: "", lifetime: "" }]);
+export default function CalculatorEBITDA() {
+  const [ebitdaData, setEbitdaData] = useState([{ revenue: "", opex: "", depreciation: "" }]);
   const [results, setResults] = useState([]);
 
   const handleChange = (index, field, value) => {
-    const updated = [...ltvData];
+    const updated = [...ebitdaData];
     updated[index][field] = value;
-    setLtvData(updated);
+    setEbitdaData(updated);
   };
 
   const addRow = () => {
-    setLtvData([...ltvData, { arpu: "", lifetime: "" }]);
+    setEbitdaData([...ebitdaData, { revenue: "", opex: "", depreciation: "" }]);
   };
 
-  const calculateLTV = () => {
-    const res = ltvData.map(({ arpu, lifetime }) => {
-      const a = parseFloat(arpu);
-      const l = parseFloat(lifetime);
-      if (!isNaN(a) && !isNaN(l)) {
-        return (a * l).toFixed(2);
+  const calculateEBITDA = () => {
+    const res = ebitdaData.map(({ revenue, opex, depreciation }) => {
+      const r = parseFloat(revenue);
+      const o = parseFloat(opex);
+      const d = parseFloat(depreciation);
+      if (!isNaN(r) && !isNaN(o) && !isNaN(d)) {
+        return (r - o + d).toFixed(2);
       }
       return 0;
     });
@@ -48,13 +49,13 @@ export default function CalculatorLTV() {
   };
 
   const data = {
-    labels: ltvData.map((_, i) => `Период ${i + 1}`),
+    labels: ebitdaData.map((_, i) => `Период ${i + 1}`),
     datasets: [
       {
-        label: "LTV",
+        label: "EBITDA",
         data: results,
-        borderColor: "rgb(245,158,11)",
-        backgroundColor: "rgba(245,158,11,0.3)",
+        borderColor: "rgb(147,51,234)",
+        backgroundColor: "rgba(147,51,234,0.3)",
       },
     ],
   };
@@ -80,31 +81,42 @@ export default function CalculatorLTV() {
   return (
     <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        LTV
+        EBITDA
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Укажите средний доход с одного клиента (ARPU) и продолжительность его жизни в периодах, чтобы рассчитать LTV.
+        Укажите выручку, операционные расходы и амортизацию, чтобы рассчитать EBITDA (прибыль до вычета процентов, налогов и амортизации).
       </p>
 
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {ltvData.map((entry, index) => (
+        {ebitdaData.map((entry, index) => (
           <div key={index} className="mb-6">
             <h3 className="text-white font-semibold mb-2">Период {index + 1}</h3>
-            <label className="block mb-2 text-sm">Средний доход на клиента (ARPU, ₽):</label>
+
+            <label className="block mb-2 text-sm">Выручка (₽):</label>
             <input
               type="number"
-              value={entry.arpu}
-              onChange={(e) => handleChange(index, "arpu", e.target.value)}
+              value={entry.revenue}
+              onChange={(e) => handleChange(index, "revenue", e.target.value)}
               className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 3000"
+              placeholder="Например: 500000"
             />
-            <label className="block mb-2 text-sm">Средняя продолжительность жизни (мес.):</label>
+
+            <label className="block mb-2 text-sm">Операционные расходы (OPEX, ₽):</label>
             <input
               type="number"
-              value={entry.lifetime}
-              onChange={(e) => handleChange(index, "lifetime", e.target.value)}
+              value={entry.opex}
+              onChange={(e) => handleChange(index, "opex", e.target.value)}
               className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 12"
+              placeholder="Например: 300000"
+            />
+
+            <label className="block mb-2 text-sm">Амортизация (₽):</label>
+            <input
+              type="number"
+              value={entry.depreciation}
+              onChange={(e) => handleChange(index, "depreciation", e.target.value)}
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
+              placeholder="Например: 20000"
             />
           </div>
         ))}
@@ -117,10 +129,10 @@ export default function CalculatorLTV() {
         </button>
 
         <button
-          onClick={calculateLTV}
-          className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded w-full"
+          onClick={calculateEBITDA}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded w-full"
         >
-          Рассчитать LTV
+          Рассчитать EBITDA
         </button>
       </div>
 

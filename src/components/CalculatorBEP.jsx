@@ -21,26 +21,27 @@ ChartJS.register(
   Legend
 );
 
-export default function CalculatorLTV() {
-  const [ltvData, setLtvData] = useState([{ arpu: "", lifetime: "" }]);
+export default function CalculatorBEP() {
+  const [bepData, setBepData] = useState([{ fixed: "", price: "", variable: "" }]);
   const [results, setResults] = useState([]);
 
   const handleChange = (index, field, value) => {
-    const updated = [...ltvData];
+    const updated = [...bepData];
     updated[index][field] = value;
-    setLtvData(updated);
+    setBepData(updated);
   };
 
   const addRow = () => {
-    setLtvData([...ltvData, { arpu: "", lifetime: "" }]);
+    setBepData([...bepData, { fixed: "", price: "", variable: "" }]);
   };
 
-  const calculateLTV = () => {
-    const res = ltvData.map(({ arpu, lifetime }) => {
-      const a = parseFloat(arpu);
-      const l = parseFloat(lifetime);
-      if (!isNaN(a) && !isNaN(l)) {
-        return (a * l).toFixed(2);
+  const calculateBEP = () => {
+    const res = bepData.map(({ fixed, price, variable }) => {
+      const f = parseFloat(fixed);
+      const p = parseFloat(price);
+      const v = parseFloat(variable);
+      if (!isNaN(f) && !isNaN(p) && !isNaN(v) && (p - v) > 0) {
+        return (f / (p - v)).toFixed(2);
       }
       return 0;
     });
@@ -48,13 +49,13 @@ export default function CalculatorLTV() {
   };
 
   const data = {
-    labels: ltvData.map((_, i) => `Период ${i + 1}`),
+    labels: bepData.map((_, i) => `Период ${i + 1}`),
     datasets: [
       {
-        label: "LTV",
+        label: "Точка безубыточности (единиц)",
         data: results,
-        borderColor: "rgb(245,158,11)",
-        backgroundColor: "rgba(245,158,11,0.3)",
+        borderColor: "rgb(239,68,68)",
+        backgroundColor: "rgba(239,68,68,0.3)",
       },
     ],
   };
@@ -80,31 +81,42 @@ export default function CalculatorLTV() {
   return (
     <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        LTV
+        BEP
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Укажите средний доход с одного клиента (ARPU) и продолжительность его жизни в периодах, чтобы рассчитать LTV.
+        Укажите постоянные издержки, цену продажи и переменные издержки на единицу, чтобы рассчитать точку безубыточности (Break-Even Point).
       </p>
 
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {ltvData.map((entry, index) => (
+        {bepData.map((entry, index) => (
           <div key={index} className="mb-6">
             <h3 className="text-white font-semibold mb-2">Период {index + 1}</h3>
-            <label className="block mb-2 text-sm">Средний доход на клиента (ARPU, ₽):</label>
+
+            <label className="block mb-2 text-sm">Постоянные издержки (₽):</label>
             <input
               type="number"
-              value={entry.arpu}
-              onChange={(e) => handleChange(index, "arpu", e.target.value)}
+              value={entry.fixed}
+              onChange={(e) => handleChange(index, "fixed", e.target.value)}
               className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 3000"
+              placeholder="Например: 100000"
             />
-            <label className="block mb-2 text-sm">Средняя продолжительность жизни (мес.):</label>
+
+            <label className="block mb-2 text-sm">Цена продажи за единицу (₽):</label>
             <input
               type="number"
-              value={entry.lifetime}
-              onChange={(e) => handleChange(index, "lifetime", e.target.value)}
+              value={entry.price}
+              onChange={(e) => handleChange(index, "price", e.target.value)}
               className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 12"
+              placeholder="Например: 1000"
+            />
+
+            <label className="block mb-2 text-sm">Переменные издержки на единицу (₽):</label>
+            <input
+              type="number"
+              value={entry.variable}
+              onChange={(e) => handleChange(index, "variable", e.target.value)}
+              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
+              placeholder="Например: 600"
             />
           </div>
         ))}
@@ -117,10 +129,10 @@ export default function CalculatorLTV() {
         </button>
 
         <button
-          onClick={calculateLTV}
-          className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded w-full"
+          onClick={calculateBEP}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded w-full"
         >
-          Рассчитать LTV
+          Рассчитать BEP
         </button>
       </div>
 

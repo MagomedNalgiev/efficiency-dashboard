@@ -86,7 +86,7 @@ export default function CalculatorDeploymentFrequency() {
     <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
 
       <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        Калькулятор Deployment Frequency
+        Deployment Frequency
       </h1>
       <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
         Укажите количество дней между каждым деплоем, чтобы рассчитать среднюю частоту деплоев и построить график.

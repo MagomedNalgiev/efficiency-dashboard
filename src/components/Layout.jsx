@@ -34,6 +34,14 @@ export default function Layout() {
             <Link to="/romi" className="block hover:text-pink-400">ROMI</Link>
             <Link to="/ltv" className="block hover:text-pink-400">LTV</Link>
           </div>
+
+          <div>
+            <h3 className="text-sm text-gray-400 uppercase mb-2">Финансы</h3>
+            <Link to="/ebitda" className="block hover:text-pink-400">EBITDA</Link>
+            <Link to="/ros" className="block hover:text-pink-400">ROS</Link>
+            <Link to="/bep" className="block hover:text-pink-400">BEP</Link>
+          </div>
+
           <div>
             <h3 className="text-sm text-gray-400 uppercase mb-2">Прочее</h3>
             <Link to="/custommetric" className="block hover:text-purple-400">Custom Metric</Link>
@@ -69,16 +77,16 @@ export default function Layout() {
               </Link>
             </div>
 
-            <nav className="hidden md:flex flex-wrap justify-center gap-5">
-              <Link to="/velocity" className="text-gray-300 hover:text-green-400 transition">Velocity</Link>
-              <Link to="/cycletime" className="text-gray-300 hover:text-blue-400 transition">Cycle Time</Link>
-              <Link to="/deploymentfrequency" className="text-gray-300 hover:text-green-400 transition">Deployment</Link>
-              <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link>
-              <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link>
-              <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link>
-              <Link to="/cac" className="text-gray-300 hover:text-purple-400 transition">CAC</Link>
+            {/* <nav className="hidden md:flex flex-wrap justify-center gap-5"> */}
+              {/* <Link to="/velocity" className="text-gray-300 hover:text-green-400 transition">Velocity</Link> */}
+              {/* <Link to="/cycletime" className="text-gray-300 hover:text-blue-400 transition">Cycle Time</Link> */}
+              {/* <Link to="/deploymentfrequency" className="text-gray-300 hover:text-green-400 transition">Deployment</Link> */}
+              {/* <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link> */}
+              {/* <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link> */}
+              {/* <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link> */}
+              {/* <Link to="/cac" className="text-gray-300 hover:text-purple-400 transition">CAC</Link> */}
+            {/* </nav> */}
 
-            </nav>
           </div>
         </header>
 
