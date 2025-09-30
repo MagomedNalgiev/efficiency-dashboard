@@ -1,0 +1,41 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linter
+      run: npm run lint
+
+    - name: Build application
+      run: npm run build
+
+    - name: Deploy to Netlify
+      if: github.ref == 'refs/heads/main'
+      uses: nwtgck/actions-netlify@v3.0
+      with:
+        publish-dir: './dist'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Автодеплой из GitHub Actions"
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.nfp_xqkgNDtmUkBQxEHR3ePYF27Ycia4bQ2Le3ee }}
+        NETLIFY_SITE_ID: ${{ secrets.b97abd1a-80b2-44b5-b1d8-f294f13c9834 }}

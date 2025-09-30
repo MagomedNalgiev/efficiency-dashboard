@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
+import { initGA } from './utils/analytics'
 
 import Layout from './components/Layout';
 import App from './App.jsx';
@@ -19,7 +20,7 @@ import CalculatorROS from "./components/CalculatorROS";
 import CalculatorBEP from "./components/CalculatorBEP";
 
 
-
+initGA()
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
