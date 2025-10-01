@@ -56,8 +56,8 @@ function App() {
         </div>
       </div>
 
-      <footer className="mt-12 text-gray-400 text-sm">
-        © 2025 Metricspace
+      <footer className="mt-16 text-center text-white/60 text-sm">
+        <p>© 2025 Metricspace v{__APP_VERSION__}</p>
       </footer>
     </div>
   );

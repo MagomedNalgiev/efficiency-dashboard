@@ -11,7 +11,8 @@ import {
   Legend,
 } from "chart.js";
 
-import Header from "../components/Header";
+import { trackCalculatorUsage, trackEvent } from '../utils/analytics'
+import Header from "@components/Header"
 
 ChartJS.register(
   CategoryScale,
@@ -49,6 +50,15 @@ export default function CalculatorVelocity() {
       return 0;
     });
     setVelocities(results);
+
+    // Новое: трекинг использования
+    trackCalculatorUsage('velocity')
+    trackEvent('calculation_completed', {
+      calculator: 'velocity',
+      sprints_count: sprintsData.length,
+      has_results: results.some(r => r > 0)
+    })
+
   };
 
   const data = {
