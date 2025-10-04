@@ -47,6 +47,11 @@ export default function Layout() {
             <Link to="/custommetric" className="block hover:text-purple-400">Custom Metric</Link>
           </div>
 
+          <div>
+            <h3 className="text-sm text-gray-400 uppercase mb-2">Управление</h3>
+            <Link to="/data-manager" className="block hover:text-purple-400">Управление данными</Link>
+          </div>
+
         </nav>
       </aside>
 

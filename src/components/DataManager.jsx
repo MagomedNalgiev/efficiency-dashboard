@@ -86,27 +86,29 @@ export default function DataManager() {
                   </div>
                 </div>
 
-                <div className="border-t border-white/20 pt-6 flex flex-wrap gap-4">
-                  <button
-                    onClick={handleExportAll}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
-                  >
-                    Экспортировать все данные
-                  </button>
+                <div className="border-t border-white/20 pt-6">
+                  <div className="flex flex-wrap gap-4">
+                    <button
+                      onClick={handleExportAll}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                    >
+                      Экспортировать все данные
+                    </button>
 
-                  <button
-                    onClick={refreshKeys}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                  >
-                    Обновить список
-                  </button>
+                    <button
+                      onClick={refreshKeys}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                    >
+                      Обновить список
+                    </button>
 
-                  <button
-                    onClick={clearAllData}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition duration-200"
-                  >
-                    Очистить все данные
-                  </button>
+                    <button
+                      onClick={clearAllData}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                    >
+                      Очистить все данные
+                    </button>
+                  </div>
                 </div>
               </>
             )}

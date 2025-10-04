@@ -56,6 +56,14 @@ function App() {
         </div>
       </div>
 
+      {/* Категория: Управление */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-4 text-white">Управление</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card title="Управление данными" description="Экспорт и очистка всех данных" to="/data-manager" />
+        </div>
+      </div>
+
       <footer className="mt-16 text-center text-white/60 text-sm">
         <p>© 2025 Metricspace v{__APP_VERSION__}</p>
       </footer>
