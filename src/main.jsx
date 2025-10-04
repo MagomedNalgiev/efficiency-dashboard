@@ -42,7 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/ebitda" element={<CalculatorEBITDA />} />
           <Route path="/ros" element={<CalculatorROS />} />
           <Route path="/bep" element={<CalculatorBEP />} />
-          <Route path="/data-manager" element={<DataManager />} />
+          <Route path="data-manager" element={<DataManager />} />
 
 
 

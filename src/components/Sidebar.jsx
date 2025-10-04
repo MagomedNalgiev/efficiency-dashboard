@@ -8,28 +8,60 @@ export default function Sidebar({ isOpen, onClose }) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="p-4 text-white pt-16">
-        <div className="mb-4">
-          <h3 className="text-sm text-gray-400 uppercase">Delivery</h3>
-          <Link to="/velocity" className="block py-1 hover:text-green-400" onClick={onClose}>Velocity</Link>
-          <Link to="/deploymentfrequency" className="block py-1 hover:text-green-400" onClick={onClose}>Deployment Frequency</Link>
-          <Link to="/cycletime" className="block py-1 hover:text-blue-400" onClick={onClose}>Cycle Time</Link>
-        </div>
+      <div className="p-6 text-white">
+        <h3 className="text-lg font-bold mb-4">Delivery</h3>
+        <Link to="/velocity" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Velocity
+        </Link>
+        <Link to="/deploymentfrequency" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Deployment Frequency
+        </Link>
+        <Link to="/cycletime" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Cycle Time
+        </Link>
 
-        <div className="mb-4">
-          <h3 className="text-sm text-gray-400 uppercase">Stability</h3>
-          <Link to="/mttr" className="block py-1 hover:text-red-400" onClick={onClose}>MTTR</Link>
-        </div>
+        <h3 className="text-lg font-bold mb-4 mt-6">Stability</h3>
+        <Link to="/mttr" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          MTTR
+        </Link>
 
-        <div className="mb-4">
-          <h3 className="text-sm text-gray-400 uppercase">Quality</h3>
-          <Link to="/defectleakage" className="block py-1 hover:text-amber-400" onClick={onClose}>Defect Leakage</Link>
-        </div>
+        <h3 className="text-lg font-bold mb-4 mt-6">Quality</h3>
+        <Link to="/defectleakage" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Defect Leakage
+        </Link>
 
-        <div>
-          <h3 className="text-sm text-gray-400 uppercase">Custom</h3>
-          <Link to="/custommetric" className="block py-1 hover:text-purple-400" onClick={onClose}>Custom Metric</Link>
-        </div>
+        <h3 className="text-lg font-bold mb-4 mt-6">Marketing</h3>
+        <Link to="/cac" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          CAC
+        </Link>
+        <Link to="/romi" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          ROMI
+        </Link>
+        <Link to="/ltv" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          LTV
+        </Link>
+
+        <h3 className="text-lg font-bold mb-4 mt-6">Finance</h3>
+        <Link to="/ebitda" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          EBITDA
+        </Link>
+        <Link to="/ros" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          ROS
+        </Link>
+        <Link to="/bep" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          BEP
+        </Link>
+
+        <h3 className="text-lg font-bold mb-4 mt-6">Custom</h3>
+        <Link to="/custommetric" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Custom Metric
+        </Link>
+
+        {/* ДОБАВЬТЕ ЭТУ СЕКЦИЮ: */}
+        <h3 className="text-lg font-bold mb-4 mt-6">Управление</h3>
+        <Link to="/data-manager" className="block py-2 px-4 hover:bg-gray-700 rounded">
+          Управление данными
+        </Link>
       </div>
     </div>
   );
