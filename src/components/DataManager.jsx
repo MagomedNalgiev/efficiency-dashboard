@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Header from "@components/Header"
 import { getStoredKeys, clearStoredData } from "@hooks/useLocalStorage"
 import { trackEvent } from "@utils/analytics"
 import { exportAllData, exportToCSV } from "@utils/exportHelpers"
@@ -47,7 +46,6 @@ export default function DataManager() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-white mb-6">Управление данными</h1>

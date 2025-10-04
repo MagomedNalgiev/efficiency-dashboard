@@ -2,71 +2,120 @@ import { Link } from "react-router-dom";
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col py-8 w-full pl-8 md:pl-16 pt-16">
-      <h1 className="text-5xl md:text-6xl font-extrabold mb-4">Metricspace</h1>
-      <p className="text-lg md:text-xl leading-relaxed max-w-3xl mb-8 text-gray-300">
-        Быстрый расчёт и визуализация метрик эффективности IT-команд: Velocity, Cycle Time, MTTR, Deployment Frequency и других.
+    <div className="min-h-screen flex flex-col py-8 w-full px-8 md:px-16 pt-16">
+      <h1 className="text-4xl font-bold text-white mb-6">Metricspace</h1>
+      <p className="text-white/80 mb-8 max-w-4xl">
+        Быстрый расчёт и визуализация метрик эффективности IT-команд: Velocity,
+        Cycle Time, MTTR, Deployment Frequency и других.
         Рассчитывайте, стройте графики и улучшайте производительность вашей команды.
       </p>
 
       {/* Категория: Delivery */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Delivery</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="Velocity" description="Расчёт средней скорости команды" to="/velocity" />
-          <Card title="Cycle Time" description="Время выполнения задачи" to="/cycletime" />
-          <Card title="Deployment Frequency" description="Частота деплоев" to="/deploymentfrequency" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Delivery</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="Velocity"
+            description="Расчет средней скорости команды"
+            to="/velocity"
+          />
+          <Card
+            title="Cycle Time"
+            description="Время выполнения задачи"
+            to="/cycletime"
+          />
+          <Card
+            title="Deployment Frequency"
+            description="Частота деплоев"
+            to="/deploymentfrequency"
+          />
         </div>
       </div>
 
       {/* Категория: Quality */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Quality</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="Defect Leakage" description="Анализ багов и качества" to="/defectleakage" />
-          <Card title="MTTR" description="Среднее время восстановления" to="/mttr" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Quality</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="Defect Leakage"
+            description="Анализ багов и качества"
+            to="/defectleakage"
+          />
+          <Card
+            title="MTTR"
+            description="Среднее время восстановления"
+            to="/mttr"
+          />
         </div>
       </div>
 
       {/* Категория: Маркетинг */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Маркетинг</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="CAC" description="Стоимость привлечения клиента" to="/cac" />
-          <Card title="ROMI" description="Коэффициент возврата инвестиций в маркетинг" to="/romi" />
-          <Card title="LTV" description="Пожизненная ценность клиента" to="/ltv" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Маркетинг</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="CAC"
+            description="Customer Acquisition Cost"
+            to="/cac"
+          />
+          <Card
+            title="ROMI"
+            description="Return on Marketing Investment"
+            to="/romi"
+          />
+          <Card
+            title="LTV"
+            description="Lifetime Value"
+            to="/ltv"
+          />
         </div>
       </div>
 
       {/* Категория: Финансы */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Финансы</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="EBITDA" description="Операционная прибыль до вычета процентов, налогов и амортизации" to="/ebitda" />
-          <Card title="ROS" description="Рентабельность продаж" to="/ros" />
-          <Card title="BEP" description="Точка безубыточности" to="/bep" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Финансы</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="EBITDA"
+            description="Прибыль до налогообложения"
+            to="/ebitda"
+          />
+          <Card
+            title="ROS"
+            description="Return on Sales"
+            to="/ros"
+          />
+          <Card
+            title="BEP"
+            description="Break-even point"
+            to="/bep"
+          />
         </div>
       </div>
 
       {/* Категория: Custom */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Прочее</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="Custom Metric" description="Добавить свою метрику" to="/custommetric" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Прочее</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="Custom Metric"
+            description="Пользовательская метрика"
+            to="/custommetric"
+          />
         </div>
       </div>
 
       {/* Категория: Управление */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-white">Управление</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card title="Управление данными" description="Экспорт и очистка всех данных" to="/data-manager" />
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Управление</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            title="Управление данными"
+            description="Экспорт и управление сохраненными данными"
+            to="/data-manager"
+          />
         </div>
       </div>
-
-      <footer className="mt-16 text-center text-white/60 text-sm">
-        <p>© 2025 Metricspace v{__APP_VERSION__}</p>
-      </footer>
     </div>
   );
 }
@@ -77,8 +126,8 @@ function Card({ title, description, to }) {
       to={to}
       className="block bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow hover:bg-white/20 transition duration-200"
     >
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="text-gray-300 text-sm mt-1">{description}</p>
+      <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
+      <p className="text-white/70">{description}</p>
     </Link>
   );
 }

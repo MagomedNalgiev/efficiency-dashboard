@@ -5,103 +5,88 @@ import { Outlet, Link } from "react-router-dom";
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
-
   const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-white">
       {/* Сайдбар */}
-      <aside
+      <div
         className={`fixed top-0 left-0 h-full w-56 md:w-64 bg-black z-40 shadow-lg pt-20 transform transition-transform duration-300 ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <nav className="p-6 space-y-6">
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Delivery</h3>
-            <Link to="/velocity" className="block hover:text-green-400">Velocity</Link>
-            <Link to="/cycletime" className="block hover:text-blue-400">Cycle Time</Link>
-            <Link to="/deploymentfrequency" className="block hover:text-green-400">Deployment Frequency</Link>
-          </div>
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Quality</h3>
-            <Link to="/defectleakage" className="block hover:text-amber-400">Defect Leakage</Link>
-            <Link to="/mttr" className="block hover:text-red-400">MTTR</Link>
-          </div>
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Маркетинг</h3>
-            <Link to="/cac" className="block hover:text-pink-400">CAC</Link>
-            <Link to="/romi" className="block hover:text-pink-400">ROMI</Link>
-            <Link to="/ltv" className="block hover:text-pink-400">LTV</Link>
-          </div>
+        <div className="p-6 text-white h-full overflow-y-auto">
+          <h3 className="text-lg font-bold mb-4">DELIVERY</h3>
+          <Link to="/velocity" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Velocity
+          </Link>
+          <Link to="/cycletime" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Cycle Time
+          </Link>
+          <Link to="/deploymentfrequency" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Deployment Frequency
+          </Link>
 
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Финансы</h3>
-            <Link to="/ebitda" className="block hover:text-pink-400">EBITDA</Link>
-            <Link to="/ros" className="block hover:text-pink-400">ROS</Link>
-            <Link to="/bep" className="block hover:text-pink-400">BEP</Link>
-          </div>
+          <h3 className="text-lg font-bold mb-4 mt-6">QUALITY</h3>
+          <Link to="/defectleakage" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Defect Leakage
+          </Link>
+          <Link to="/mttr" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            MTTR
+          </Link>
 
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Прочее</h3>
-            <Link to="/custommetric" className="block hover:text-purple-400">Custom Metric</Link>
-          </div>
+          <h3 className="text-lg font-bold mb-4 mt-6">МАРКЕТИНГ</h3>
+          <Link to="/cac" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            CAC
+          </Link>
+          <Link to="/romi" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            ROMI
+          </Link>
+          <Link to="/ltv" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            LTV
+          </Link>
 
-          <div>
-            <h3 className="text-sm text-gray-400 uppercase mb-2">Управление</h3>
-            <Link to="/data-manager" className="block hover:text-purple-400">Управление данными</Link>
-          </div>
+          <h3 className="text-lg font-bold mb-4 mt-6">ФИНАНСЫ</h3>
+          <Link to="/ebitda" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            EBITDA
+          </Link>
+          <Link to="/ros" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            ROS
+          </Link>
+          <Link to="/bep" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            BEP
+          </Link>
 
-        </nav>
-      </aside>
+          <h3 className="text-lg font-bold mb-4 mt-6">ПРОЧЕЕ</h3>
+          <Link to="/custommetric" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Custom Metric
+          </Link>
 
-      {/* Обертка для header + main с отступом */}
-      <div className={`transition-all duration-300 ${menuOpen ? "md:pl-64" : "md:pl-0"}`}>
-        {/* Верхняя панель */}
-        <header className="fixed top-0 left-0 right-0 bg-black backdrop-blur-md z-50 shadow">
-          <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
-            <div className="flex items-center gap-4">
-              <div className="relative z-50 scale-60">
-                <input
-                  id="burger-toggle"
-                  type="checkbox"
-                  checked={menuOpen}
-                  onChange={toggleMenu}
-                  className="burger-checkbox"
-                />
-                <label htmlFor="burger-toggle" className="burger">
-                  <span></span>
-                </label>
-              </div>
+          <h3 className="text-lg font-bold mb-4 mt-6">УПРАВЛЕНИЕ</h3>
+          <Link to="/data-manager" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+            Управление данными
+          </Link>
+        </div>
 
-              <Link
-                to="/"
-                className="text-lg font-semibold text-white hover:text-green-400 transition"
-              >
-                Metricspace
-              </Link>
-            </div>
-
-            {/* <nav className="hidden md:flex flex-wrap justify-center gap-5"> */}
-              {/* <Link to="/velocity" className="text-gray-300 hover:text-green-400 transition">Velocity</Link> */}
-              {/* <Link to="/cycletime" className="text-gray-300 hover:text-blue-400 transition">Cycle Time</Link> */}
-              {/* <Link to="/deploymentfrequency" className="text-gray-300 hover:text-green-400 transition">Deployment</Link> */}
-              {/* <Link to="/defectleakage" className="text-gray-300 hover:text-amber-400 transition">Defects</Link> */}
-              {/* <Link to="/mttr" className="text-gray-300 hover:text-red-400 transition">MTTR</Link> */}
-              {/* <Link to="/custommetric" className="text-gray-300 hover:text-purple-400 transition">Custom</Link> */}
-              {/* <Link to="/cac" className="text-gray-300 hover:text-purple-400 transition">CAC</Link> */}
-            {/* </nav> */}
-
-          </div>
-        </header>
-
-        {/* Контент */}
-        <main className="pt-24 pb-8 w-full">
-          <div className="px-4 sm:px-6 md:px-16">
-            <Outlet />
-          </div>
-        </main>
       </div>
+
+      {/* ФИКСИРОВАННЫЙ Header - НЕ СДВИГАЕТСЯ */}
+      <Header toggleMenu={toggleMenu} menuOpen={menuOpen} />
+
+      {/* Контент с отступом от сайдбара - ТОЛЬКО ОН СДВИГАЕТСЯ */}
+      <main className={`pt-20 transition-all duration-300 ${
+        menuOpen ? 'md:pl-64' : 'pl-0'
+      }`}>
+        <Outlet />
+      </main>
+
+      {/* Overlay для закрытия меню на мобильных */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
     </div>
   );
 }
