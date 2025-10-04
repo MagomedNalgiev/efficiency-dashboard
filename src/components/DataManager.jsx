@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Header from "@components/Header"
 import { getStoredKeys, clearStoredData } from "@hooks/useLocalStorage"
 import { trackEvent } from "@utils/analytics"
+import { exportAllData, exportToCSV } from "@utils/exportHelpers"
 
 export default function DataManager() {
   const [keys, setKeys] = useState(getStoredKeys())
@@ -15,6 +16,15 @@ export default function DataManager() {
       clearStoredData(key)
       refreshKeys()
       trackEvent('specific_data_cleared', { storage_key: key })
+    }
+  }
+
+  const handleExportAll = () => {
+    const success = exportAllData()
+    if (success) {
+      alert('Данные успешно экспортированы!')
+    } else {
+      alert('Ошибка при экспорте данных')
     }
   }
 
@@ -77,6 +87,12 @@ export default function DataManager() {
                 </div>
 
                 <div className="border-t border-white/20 pt-6">
+                  <button
+                    onClick={handleExportAll}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg mr-4"
+                  >
+                    Экспортировать все данные
+                  </button>
                   <button
                     onClick={clearAllData}
                     className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"

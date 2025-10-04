@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,136 +8,162 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js";
+} from "chart.js"
+import Header from "@components/Header"
+import SaveIndicator from "@components/SaveIndicator"
+import { useCalculator } from "@hooks/useCalculator"
 
-import Header from "../components/Header";
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const STORAGE_KEY = 'metricspace_deployment_frequency_data'
+const INITIAL_DATA = [{ daysBetween: "" }]
 
 export default function CalculatorDeploymentFrequency() {
-  const [deploys, setDeploys] = useState([{ daysBetween: "" }]);
-  const [average, setAverage] = useState(null);
+  const {
+    data: deployments,
+    results,
+    lastSaved,
+    isModified,
+    hasCalculated,
+    addItem,
+    removeItem,
+    updateItem,
+    calculate,
+    clearAllData
+  } = useCalculator('deployment_frequency', INITIAL_DATA, STORAGE_KEY)
 
   const handleChange = (index, value) => {
-    const updated = [...deploys];
-    updated[index].daysBetween = value;
-    setDeploys(updated);
-  };
+    updateItem(index, 'daysBetween', value)
+  }
 
-  const addDeploy = () => {
-    setDeploys([...deploys, { daysBetween: "" }]);
-  };
+  const addDeployment = () => {
+    addItem({ daysBetween: "" })
+  }
 
-  const calculateAverage = () => {
-    const values = deploys.map((d) => parseFloat(d.daysBetween)).filter((v) => !isNaN(v) && v > 0);
-    if (values.length > 0) {
-      const freqs = values.map((d) => +(1 / d).toFixed(3)); // деплоев в день
-      const avg = (
-        freqs.reduce((acc, val) => acc + val, 0) / freqs.length
-      ).toFixed(3);
-      setAverage(avg);
-    } else {
-      setAverage(null);
-    }
-  };
+  const calculateFrequency = () => {
+    calculate((data) => {
+      const validDeployments = data
+        .map(deployment => parseFloat(deployment.daysBetween))
+        .filter(days => !isNaN(days) && days >= 0)
+      return validDeployments
+    })
+  }
+
+  const avgFrequency = results.length > 0
+    ? (results.reduce((sum, days) => sum + days, 0) / results.length).toFixed(1)
+    : 0
+
+  const deploymentsPerWeek = avgFrequency > 0 ? (7 / avgFrequency).toFixed(2) : 0
 
   const data = {
-    labels: deploys.map((_, i) => `Деплой ${i + 1}`),
-    datasets: [
-      {
-        label: "Деплоев в день",
-        data: deploys.map((d) =>
-          d.daysBetween && parseFloat(d.daysBetween) > 0
-            ? +(1 / parseFloat(d.daysBetween)).toFixed(3)
-            : 0
-        ),
-        borderColor: "rgb(34,197,94)",
-        backgroundColor: "rgba(34,197,94,0.3)",
-      },
-    ],
-  };
+    labels: deployments.map((_, i) => `Деплой ${i + 1}`),
+    datasets: [{
+      label: "Дни между деплоями",
+      data: deployments.map(deployment => parseFloat(deployment.daysBetween) || 0),
+      borderColor: "rgb(168,85,247)",
+      backgroundColor: "rgba(168,85,247,0.3)",
+      tension: 0.1,
+    }],
+  }
 
   const options = {
+    responsive: true,
     plugins: {
-      legend: {
-        labels: { color: "#ffffff" },
-      },
+      legend: { labels: { color: "#ffffff" } },
+      title: { display: true, text: 'Частота деплоев', color: '#ffffff' }
     },
     scales: {
-      x: {
-        ticks: { color: "#ffffff" },
-      },
+      x: { ticks: { color: "#ffffff" }, grid: { color: "rgba(255,255,255,0.1)" } },
       y: {
         ticks: { color: "#ffffff" },
+        grid: { color: "rgba(255,255,255,0.1)" },
+        title: { display: true, text: 'Дни', color: '#ffffff' }
       },
     },
-  };
+  }
 
   return (
-    <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
-
-      <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        Deployment Frequency
-      </h1>
-      <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Укажите количество дней между каждым деплоем, чтобы рассчитать среднюю частоту деплоев и построить график.
-      </p>
-
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {deploys.map((deploy, index) => (
-          <div key={index} className="mb-4">
-            <label className="block mb-1 text-sm text-white">
-              Деплой {index + 1} — дней между деплоем и предыдущим:
-            </label>
-            <input
-              type="number"
-              value={deploy.daysBetween}
-              onChange={(e) => handleChange(index, e.target.value)}
-              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 2"
-            />
-          </div>
-        ))}
-
-        <button
-          onClick={addDeploy}
-          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
-        >
-          ➕ Добавить деплой
-        </button>
-
-        <button
-          onClick={calculateAverage}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
-        >
-          Рассчитать частоту
-        </button>
-
-        {average && (
-          <p className="mt-4 text-lg text-white">
-            Средняя частота деплоев:{" "}
-            <span className="text-green-400 font-semibold">{average}</span> в день
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold text-white mb-6">Deployment Frequency</h1>
+          <p className="text-white/80 mb-8">
+            Укажите количество дней между каждым деплоем, чтобы рассчитать среднюю частоту деплоев.
+            Данные автоматически сохраняются.
           </p>
-        )}
-      </div>
 
-      {average && (
-        <div className="mt-8 w-full max-w-2xl">
-          <Line data={data} options={options} />
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
+            {deployments.map((deployment, index) => (
+              <div key={index} className="mb-4 flex items-center space-x-4">
+                <label className="text-white min-w-[100px]">
+                  Деплой {index + 1}:
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={deployment.daysBetween}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  className="flex-1 p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Дней от предыдущего деплоя"
+                />
+                <span className="text-white/70">дней</span>
+                {deployments.length > 1 && (
+                  <button
+                    onClick={() => removeItem(index)}
+                    className="text-red-400 hover:text-red-300 text-sm"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <div className="flex flex-wrap gap-4 mt-6">
+              <button
+                onClick={addDeployment}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
+              >
+                Добавить деплой
+              </button>
+
+              <button
+                onClick={calculateFrequency}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
+              >
+                Рассчитать частоту
+              </button>
+
+              <button
+                onClick={clearAllData}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
+              >
+                Очистить всё
+              </button>
+            </div>
+
+            <SaveIndicator lastSaved={lastSaved} isModified={isModified} />
+          </div>
+
+          {results.length > 0 && hasCalculated && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="mb-4 text-center">
+                <h3 className="text-2xl font-bold text-white mb-2">Результаты</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/80">
+                  <p>
+                    Средний интервал: <span className="text-purple-400 font-bold">{avgFrequency} дней</span>
+                  </p>
+                  <p>
+                    Деплоев в неделю: <span className="text-purple-400 font-bold">{deploymentsPerWeek}</span>
+                  </p>
+                </div>
+              </div>
+              <Line data={data} options={options} />
+            </div>
+          )}
         </div>
-      )}
-
-      <footer className="mt-12 text-gray-400 text-sm">
-        © 2025 Metricspace
-      </footer>
+      </div>
     </div>
-  );
+  )
 }
