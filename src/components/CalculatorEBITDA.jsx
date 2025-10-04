@@ -85,7 +85,7 @@ export default function CalculatorEBITDA() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -124,7 +124,7 @@ export default function CalculatorEBITDA() {
                   </div>
 
                   <div>
-                    <label className="block text-white mb-2">Операционные расходы (OPEX, ₽):</label>
+                    <label className="block text-white mb-2">Операционные расходы (₽):</label>
                     <input
                       type="number"
                       min="0"
