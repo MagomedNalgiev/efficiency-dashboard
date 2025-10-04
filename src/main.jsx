@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import { initGA, initYM } from '@utils/analytics'
-
+import DataManager from './components/DataManager.jsx'
 import Layout from './components/Layout';
 import App from './App.jsx';
 import CalculatorVelocity from './components/CalculatorVelocity.jsx';
@@ -42,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/ebitda" element={<CalculatorEBITDA />} />
           <Route path="/ros" element={<CalculatorROS />} />
           <Route path="/bep" element={<CalculatorBEP />} />
+          <Route path="/data-manager" element={<DataManager />} />
 
 
 

@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,131 +8,183 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js";
+} from "chart.js"
+import Header from "@components/Header"
+import SaveIndicator from "@components/SaveIndicator"
+import { useCalculator } from "@hooks/useCalculator"
 
-import Header from "../components/Header";
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const STORAGE_KEY = 'metricspace_defect_leakage_data'
+const INITIAL_DATA = [{ productionDefects: "", totalDefects: "" }]
 
 export default function CalculatorDefectLeakage() {
-  const [entries, setEntries] = useState([{ prodDefects: "", totalDefects: "" }]);
-  const [leakages, setLeakages] = useState([]);
+  const {
+    data: observations,
+    results,
+    lastSaved,
+    isModified,
+    hasCalculated,
+    addItem,
+    removeItem,
+    updateItem,
+    calculate,
+    clearAllData
+  } = useCalculator('defect_leakage', INITIAL_DATA, STORAGE_KEY)
 
   const handleChange = (index, field, value) => {
-    const updated = [...entries];
-    updated[index][field] = value;
-    setEntries(updated);
-  };
+    updateItem(index, field, value)
+  }
 
-  const addEntry = () => {
-    setEntries([...entries, { prodDefects: "", totalDefects: "" }]);
-  };
+  const addObservation = () => {
+    addItem({ productionDefects: "", totalDefects: "" })
+  }
 
-  const calculateLeakages = () => {
-    const results = entries.map(({ prodDefects, totalDefects }) => {
-      const prod = parseFloat(prodDefects);
-      const total = parseFloat(totalDefects);
-      if (!isNaN(prod) && !isNaN(total) && total > 0) {
-        return ((prod / total) * 100).toFixed(2);
-      }
-      return 0;
-    });
-    setLeakages(results);
-  };
+  const calculateDefectLeakage = () => {
+    calculate((data) => {
+      return data.map(obs => {
+        const prod = parseFloat(obs.productionDefects)
+        const total = parseFloat(obs.totalDefects)
+        if (!isNaN(prod) && !isNaN(total) && total > 0) {
+          return ((prod / total) * 100).toFixed(1)
+        }
+        return 0
+      })
+    })
+  }
+
+  const avgLeakage = results.length > 0
+    ? (results.reduce((sum, leak) => sum + parseFloat(leak), 0) / results.length).toFixed(1)
+    : 0
 
   const data = {
-    labels: entries.map((_, i) => `Наблюдение ${i + 1}`),
-    datasets: [
-      {
-        label: "Defect Leakage (%)",
-        data: leakages,
-        borderColor: "rgb(245,158,11)",
-        backgroundColor: "rgba(245,158,11,0.3)",
-      },
-    ],
-  };
+    labels: observations.map((_, i) => `Итерация ${i + 1}`),
+    datasets: [{
+      label: "Defect Leakage (%)",
+      data: results,
+      borderColor: "rgb(245,101,101)",
+      backgroundColor: "rgba(245,101,101,0.3)",
+      tension: 0.1,
+    }],
+  }
 
   const options = {
+    responsive: true,
     plugins: {
-      legend: {
-        labels: { color: "#ffffff" },
-      },
+      legend: { labels: { color: "#ffffff" } },
+      title: { display: true, text: 'Defect Leakage по итерациям', color: '#ffffff' }
     },
     scales: {
-      x: {
-        ticks: { color: "#ffffff" },
-      },
+      x: { ticks: { color: "#ffffff" }, grid: { color: "rgba(255,255,255,0.1)" } },
       y: {
         ticks: { color: "#ffffff" },
+        grid: { color: "rgba(255,255,255,0.1)" },
+        title: { display: true, text: 'Процент (%)', color: '#ffffff' },
+        min: 0,
+        max: 100
       },
     },
-  };
+  }
 
   return (
-    <div className="min-h-screen flex flex-col pt-16 px-4 md:px-16 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold text-white mb-6">Defect Leakage</h1>
+          <p className="text-white/80 mb-8">
+            Введите значения по каждой итерации, чтобы рассчитать и визуализировать процент Defect Leakage.
+            Данные автоматически сохраняются.
+          </p>
 
-      <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
-        Defect Leakage
-      </h1>
-      <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-2xl mb-6">
-        Введите значения по каждой итерации, чтобы рассчитать и визуализировать процент Defect Leakage.
-      </p>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
+            {observations.map((obs, index) => (
+              <div key={index} className="mb-6 p-4 bg-white/5 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-xl font-semibold text-white">Итерация {index + 1}</h3>
+                  {observations.length > 1 && (
+                    <button
+                      onClick={() => removeItem(index)}
+                      className="text-red-400 hover:text-red-300 text-sm"
+                    >
+                      Удалить
+                    </button>
+                  )}
+                </div>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow w-full max-w-2xl mb-6">
-        {entries.map((entry, index) => (
-          <div key={index} className="mb-6">
-            <h3 className="text-white font-semibold mb-2">Наблюдение {index + 1}</h3>
-            <label className="block mb-2 text-sm">Дефекты в продакшене:</label>
-            <input
-              type="number"
-              value={entry.prodDefects}
-              onChange={(e) => handleChange(index, "prodDefects", e.target.value)}
-              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 5"
-            />
-            <label className="block mb-2 text-sm">Общее количество дефектов:</label>
-            <input
-              type="number"
-              value={entry.totalDefects}
-              onChange={(e) => handleChange(index, "totalDefects", e.target.value)}
-              className="w-full p-2 mb-2 rounded bg-white/5 text-white placeholder-white placeholder:text-sm focus:outline-none"
-              placeholder="Например: 50"
-            />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white mb-2">Дефекты в продакшене:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={obs.productionDefects}
+                      onChange={(e) => handleChange(index, 'productionDefects', e.target.value)}
+                      className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="Например: 5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white mb-2">Общее количество дефектов:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={obs.totalDefects}
+                      onChange={(e) => handleChange(index, 'totalDefects', e.target.value)}
+                      className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      placeholder="Например: 25"
+                    />
+                  </div>
+                </div>
+
+                {results[index] > 0 && (
+                  <div className="mt-3 p-2 bg-red-500/20 rounded text-red-300">
+                    <strong>Defect Leakage: {results[index]}%</strong>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="flex flex-wrap gap-4 mt-6">
+              <button
+                onClick={addObservation}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
+              >
+                Добавить итерацию
+              </button>
+
+              <button
+                onClick={calculateDefectLeakage}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
+              >
+                Рассчитать Defect Leakage
+              </button>
+
+              <button
+                onClick={clearAllData}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
+              >
+                Очистить всё
+              </button>
+            </div>
+
+            <SaveIndicator lastSaved={lastSaved} isModified={isModified} />
           </div>
-        ))}
 
-        <button
-          onClick={addEntry}
-          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded w-full mb-4"
-        >
-          ➕ Добавить наблюдение
-        </button>
-
-        <button
-          onClick={calculateLeakages}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded w-full"
-        >
-          Рассчитать Defect Leakage
-        </button>
-      </div>
-
-      {leakages.length > 0 && (
-        <div className="mt-8 w-full max-w-2xl">
-          <Line data={data} options={options} />
+          {results.length > 0 && hasCalculated && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="mb-4 text-center">
+                <h3 className="text-2xl font-bold text-white mb-2">Результаты</h3>
+                <p className="text-white/80">
+                  Средний Defect Leakage: <span className="text-red-400 font-bold">{avgLeakage}%</span>
+                </p>
+              </div>
+              <Line data={data} options={options} />
+            </div>
+          )}
         </div>
-      )}
-
-      <footer className="mt-12 text-gray-400 text-sm">
-        © 2025 Metricspace
-      </footer>
+      </div>
     </div>
-  );
+  )
 }
