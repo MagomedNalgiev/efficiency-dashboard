@@ -2,41 +2,104 @@ import { useState } from 'react'
 import { useSubscription } from '../../contexts/SubscriptionContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { SUBSCRIPTION_PLANS } from '../../config/subscriptionPlans'
+import YooKassaWidget from '../payment/YooKassaWidget'
 import { trackEvent } from '../../utils/analytics'
 
 export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan)
-  const [billingPeriod, setBillingPeriod] = useState('monthly') // 'monthly' | 'yearly'
-  const [processing, setProcessing] = useState(false)
-  const { upgradePlan, currentPlan } = useSubscription()
+  const [billingPeriod, setBillingPeriod] = useState('monthly')
+  const [showPaymentWidget, setShowPaymentWidget] = useState(false)
+  const [error, setError] = useState(null)
+  const { currentPlan } = useSubscription()
   const { isAuthenticated, user } = useAuth()
 
   if (!isOpen) return null
 
   const handleUpgrade = async (planId) => {
     if (!isAuthenticated) {
-      alert('Сначала необходимо зарегистрироваться')
+      setError('Сначала необходимо зарегистрироваться')
       return
     }
 
-    setProcessing(true)
-
-    try {
-      await upgradePlan(planId)
-
-      trackEvent('subscription_upgraded', {
-        plan_id: planId,
-        billing_period: billingPeriod,
-        user_id: user?.id
-      })
-
-      alert('Подписка успешно активирована!')
-      onClose()
-    } catch (error) {
-      alert('Ошибка при обновлении подписки: ' + error.message)
-    } finally {
-      setProcessing(false)
+    if (!user?.email) {
+      setError('Отсутствует email адрес')
+      return
     }
+
+    setError(null)
+    setSelectedPlan(planId)
+    setShowPaymentWidget(true)
+
+    trackEvent('payment_widget_opened', {
+      plan_id: planId,
+      billing_period: billingPeriod,
+      user_id: user.id
+    })
+  }
+
+  const handlePaymentSuccess = (payment) => {
+    trackEvent('payment_widget_completed', {
+      plan_id: selectedPlan,
+      billing_period: billingPeriod,
+      payment_id: payment.id,
+      user_id: user.id
+    })
+
+    // Закрываем модальное окно, пользователь будет перенаправлен
+    onClose()
+  }
+
+  const handlePaymentError = (error) => {
+    setError(error)
+    setShowPaymentWidget(false)
+
+    trackEvent('payment_widget_error', {
+      plan_id: selectedPlan,
+      billing_period: billingPeriod,
+      error: error,
+      user_id: user?.id
+    })
+  }
+
+  const handleClosePaymentWidget = () => {
+    setShowPaymentWidget(false)
+    setError(null)
+  }
+
+  // Если показываем виджет оплаты
+  if (showPaymentWidget) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl max-w-md w-full">
+          {/* Заголовок */}
+          <div className="p-6 border-b border-white/20 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Оплата</h2>
+              <p className="text-white/70 text-sm mt-1">
+                {SUBSCRIPTION_PLANS[selectedPlan]?.name} - {billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'} подписка
+              </p>
+            </div>
+            <button
+              onClick={handleClosePaymentWidget}
+              className="text-white/70 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Виджет ЮKassa */}
+          <YooKassaWidget
+            planId={selectedPlan}
+            billingPeriod={billingPeriod}
+            userEmail={user?.email}
+            userId={user?.id}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+            onClose={handleClosePaymentWidget}
+          />
+        </div>
+      </div>
+    )
   }
 
   const plans = [SUBSCRIPTION_PLANS.FREE, SUBSCRIPTION_PLANS.PRO, SUBSCRIPTION_PLANS.ENTERPRISE]
@@ -57,6 +120,13 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
             ✕
           </button>
         </div>
+
+        {/* Ошибка */}
+        {error && (
+          <div className="mx-6 mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+            <p className="text-red-300">{error}</p>
+          </div>
+        )}
 
         {/* Переключатель периода оплаты */}
         <div className="p-6 border-b border-white/20">
@@ -135,7 +205,7 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
                           </div>
                           {billingPeriod === 'yearly' && (
                             <div className="text-white/60 text-sm">
-                              {price}₽ в год
+                              {price}₽ в год (скидка 17%)
                             </div>
                           )}
                         </>
@@ -172,14 +242,13 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
                     ) : (
                       <button
                         onClick={() => handleUpgrade(plan.id)}
-                        disabled={processing}
                         className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
                           plan.recommended
                             ? 'bg-blue-600 hover:bg-blue-700 text-white'
                             : 'bg-white/10 hover:bg-white/20 text-white border border-white/30'
-                        } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        }`}
                       >
-                        {processing ? 'Обработка...' : `Выбрать ${plan.name}`}
+                        Оплатить {billingPeriod === 'yearly' ? `${price}₽/год` : `${price}₽/мес`}
                       </button>
                     )}
                   </div>
@@ -193,10 +262,13 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
         <div className="p-6 border-t border-white/20 bg-white/5">
           <div className="text-center text-white/60 text-sm">
             <p className="mb-2">
-              💳 Принимаем карты Visa, MasterCard, МИР
+              💳 Принимаем карты Visa, MasterCard, МИР • СБП
+            </p>
+            <p className="mb-2">
+              🔒 Безопасные платежи через ЮKassa
             </p>
             <p>
-              🔒 Безопасные платежи через Stripe • 📞 Поддержка 24/7
+              📞 Поддержка 24/7 • 💰 Возврат средств в течение 14 дней
             </p>
           </div>
         </div>
