@@ -31,11 +31,18 @@ export default function Header({ toggleMenu, menuOpen }) {
           </Link>
         </div>
 
-        {/* Аутентификация СПРАВА */}
-        <div className="flex items-center space-x-3">
+        {/* Навигация и аутентификация СПРАВА */}
+        <div className="flex items-center space-x-4">
+          {/* ДОБАВИТЬ кнопку Тарифы */}
+          <Link
+            to="/pricing"
+            className="text-white/80 hover:text-white transition-colors hidden md:inline"
+          >
+            Тарифы
+          </Link>
+
           {isAuthenticated ? (
             <>
-              {/* ИСПРАВЛЕНО: убрали "Привет," */}
               <span className="text-white/80 hidden md:inline">
                 {user?.name}
               </span>
@@ -47,7 +54,6 @@ export default function Header({ toggleMenu, menuOpen }) {
               </button>
             </>
           ) : (
-            /* ИСПРАВЛЕНО: только одна кнопка "Войти" */
             <button
               onClick={handleAuthClick}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -58,11 +64,10 @@ export default function Header({ toggleMenu, menuOpen }) {
         </div>
       </header>
 
-      {/* Модальное окно аутентификации */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        initialMode="login" // ИСПРАВЛЕНО: всегда начинаем с входа
+        initialMode="login"
       />
     </>
   )
