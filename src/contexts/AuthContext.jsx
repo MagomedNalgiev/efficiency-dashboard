@@ -64,9 +64,13 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('auth_token')
     const userProfile = localStorage.getItem('user_profile')
 
+    // ДОБАВИМ ОТЛАДКУ:
+    console.log('AuthContext восстановление:', { token, userProfile })
+
     if (token && userProfile) {
       try {
         const user = JSON.parse(userProfile)
+        console.log('Восстанавливаем пользователя:', user)
         dispatch({
           type: 'LOGIN_SUCCESS',
           payload: { user, token }
@@ -83,6 +87,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await apiService.login(credentials)
+
+      console.log('Ответ login:', response) // ДОБАВИМ ОТЛАДКУ
 
       // Сохраняем профиль пользователя
       localStorage.setItem('user_profile', JSON.stringify(response.user))
@@ -115,6 +121,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await apiService.register(userData)
+
+      console.log('Ответ register:', response) // ДОБАВИМ ОТЛАДКУ
 
       localStorage.setItem('user_profile', JSON.stringify(response.user))
 

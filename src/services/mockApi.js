@@ -26,9 +26,12 @@ class MockApiService {
 
     this.users.push(newUser)
     localStorage.setItem('mock_users', JSON.stringify(this.users))
-    localStorage.setItem('mock_current_user', JSON.stringify(newUser)) // ДОБАВЛЕНО
+    localStorage.setItem('mock_current_user', JSON.stringify(newUser))
 
     const token = `mock_token_${newUser.id}`
+
+    // ИСПРАВЛЕНИЕ: Сохраняем токен в localStorage
+    localStorage.setItem('auth_token', token)
 
     return {
       user: newUser,
@@ -49,10 +52,13 @@ class MockApiService {
       throw new Error('Неверный пароль')
     }
 
-    localStorage.setItem('mock_current_user', JSON.stringify(user)) // ДОБАВЛЕНО
-    this.currentUser = user // ДОБАВЛЕНО
+    localStorage.setItem('mock_current_user', JSON.stringify(user))
+    this.currentUser = user
 
     const token = `mock_token_${user.id}`
+
+    // ИСПРАВЛЕНИЕ: Сохраняем токен в localStorage
+    localStorage.setItem('auth_token', token)
 
     return {
       user: user,
@@ -70,8 +76,9 @@ class MockApiService {
     return this.currentUser
   }
 
-  // ДОБАВЬТЕ ЭТОТ МЕТОД:
   async logout() {
+    // ИСПРАВЛЕНИЕ: Удаляем токен при выходе
+    localStorage.removeItem('auth_token')
     localStorage.removeItem('mock_current_user')
     this.currentUser = null
     return { success: true }
