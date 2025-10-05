@@ -106,6 +106,6 @@ class ApiService {
   }
 }
 
-export const apiService = new ApiService()
+// Экспортируем нужный сервис (ТОЛЬКО ОДИН ЭКСПОРТ!)
 export const apiService = USE_MOCK_API ? mockApiService : new ApiService()
 export default apiService

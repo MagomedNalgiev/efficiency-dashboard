@@ -26,6 +26,7 @@ class MockApiService {
 
     this.users.push(newUser)
     localStorage.setItem('mock_users', JSON.stringify(this.users))
+    localStorage.setItem('mock_current_user', JSON.stringify(newUser)) // ДОБАВЛЕНО
 
     const token = `mock_token_${newUser.id}`
 
@@ -48,6 +49,8 @@ class MockApiService {
       throw new Error('Неверный пароль')
     }
 
+    localStorage.setItem('mock_current_user', JSON.stringify(user)) // ДОБАВЛЕНО
+
     const token = `mock_token_${user.id}`
 
     return {
@@ -64,6 +67,61 @@ class MockApiService {
     }
 
     return this.currentUser
+  }
+
+  // ДОБАВЬТЕ ЭТОТ МЕТОД:
+  async logout() {
+    localStorage.removeItem('mock_current_user')
+    this.currentUser = null
+    return { success: true }
+  }
+
+  // ДОБАВЬТЕ ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ДЛЯ СОВМЕСТИМОСТИ:
+  async updateProfile(profileData) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    if (!this.currentUser) {
+      throw new Error('Не авторизован')
+    }
+
+    const updatedUser = { ...this.currentUser, ...profileData }
+    localStorage.setItem('mock_current_user', JSON.stringify(updatedUser))
+    this.currentUser = updatedUser
+
+    return updatedUser
+  }
+
+  async saveCalculatorData(calculatorType, data) {
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    const key = `mock_calculator_${calculatorType}`
+    localStorage.setItem(key, JSON.stringify(data))
+
+    return { success: true }
+  }
+
+  async getCalculatorData(calculatorType) {
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    const key = `mock_calculator_${calculatorType}`
+    const data = localStorage.getItem(key)
+
+    return data ? JSON.parse(data) : null
+  }
+
+  async getAllUserData() {
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    const allData = {}
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('mock_calculator_')) {
+        const calculatorType = key.replace('mock_calculator_', '')
+        allData[calculatorType] = JSON.parse(localStorage.getItem(key))
+      }
+    }
+
+    return allData
   }
 }
 
