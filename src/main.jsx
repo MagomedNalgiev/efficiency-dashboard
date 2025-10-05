@@ -6,15 +6,17 @@ import { initGA, initYM } from '@utils/analytics'
 
 // Контексты
 import { AuthProvider } from './contexts/AuthContext'
-import { SubscriptionProvider } from './contexts/SubscriptionContext' // ДОБАВИТЬ
+import { SubscriptionProvider } from './contexts/SubscriptionContext'
 
 // Компоненты
+import LandingPage from './components/LandingPage.jsx' // ДОБАВИТЬ
 import DataManager from './components/DataManager.jsx'
-import PricingPage from './components/PricingPage.jsx' // ДОБАВИТЬ
+import PricingPage from './components/PricingPage.jsx'
 import Layout from './components/Layout';
 import App from './App.jsx';
+import BlogPage from './components/BlogPage.jsx'
 
-// Калькуляторы
+// Калькуляторы (все как раньше)
 import CalculatorVelocity from './components/CalculatorVelocity.jsx';
 import CalculatorCycleTime from './components/CalculatorCycleTime.jsx';
 import CalculatorMTTR from './components/CalculatorMTTR.jsx';
@@ -34,14 +36,15 @@ initYM()
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      <SubscriptionProvider> {/* ДОБАВИТЬ */}
+      <SubscriptionProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<App />} />
-              <Route path="pricing" element={<PricingPage />} /> {/* ДОБАВИТЬ */}
+            {/* НОВЫЙ РОУТ: Лендинг как главная страница */}
+            <Route path="/" element={<LandingPage />} />
 
-              {/* Калькуляторы */}
+            {/* Приложение под /app */}
+            <Route path="/app" element={<Layout />}>
+              <Route index element={<App />} />
               <Route path="velocity" element={<CalculatorVelocity />} />
               <Route path="cycletime" element={<CalculatorCycleTime />} />
               <Route path="mttr" element={<CalculatorMTTR />} />
@@ -54,9 +57,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="ros" element={<CalculatorROS />} />
               <Route path="bep" element={<CalculatorBEP />} />
               <Route path="custommetric" element={<CalculatorCustomMetric />} />
-
               <Route path="data-manager" element={<DataManager />} />
             </Route>
+
+            {/* Отдельные страницы */}
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/blog" element={<BlogPage />} />
           </Routes>
         </BrowserRouter>
       </SubscriptionProvider>

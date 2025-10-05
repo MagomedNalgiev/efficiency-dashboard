@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
 
+# Основные страницы
+Allow: /
+Allow: /pricing
+Allow: /app
+
+# Блокируем служебные пути
+Disallow: /app/data-manager
+
+# Sitemap
 Sitemap: https://metricspace.ru/sitemap.xml

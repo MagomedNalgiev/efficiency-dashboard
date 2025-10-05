@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { useSubscription } from "./contexts/SubscriptionContext"; // ДОБАВИТЬ
-import { useAuth } from "./contexts/AuthContext"; // ДОБАВИТЬ
+import { useSubscription } from "./contexts/SubscriptionContext";
+import { useAuth } from "./contexts/AuthContext";
 
 function App() {
-  const { checkAccess, currentPlan, currentPlanInfo } = useSubscription(); // ДОБАВИТЬ
-  const { isAuthenticated } = useAuth(); // ДОБАВИТЬ
+  const { checkAccess, currentPlan, currentPlanInfo } = useSubscription();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col py-8 w-full px-8 md:px-16 pt-16">
@@ -15,7 +15,7 @@ function App() {
         Рассчитывайте, стройте графики и улучшайте производительность вашей команды.
       </p>
 
-      {/* ДОБАВИТЬ: Информация о плане */}
+      {/* Информация о плане */}
       {isAuthenticated && (
         <div className="mb-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl">
           <div className="flex justify-between items-center">
@@ -24,7 +24,7 @@ function App() {
               <span className="text-white font-bold">{currentPlanInfo?.name}</span>
               {currentPlan === 'FREE' && currentPlanInfo && (
                 <span className="text-orange-400 ml-2">
-                  ({currentPlanInfo.limits.calculationsPerMonth - 0} расчетов осталось)
+                  ({(currentPlanInfo.limits.calculationsPerMonth - (currentPlanInfo.usage?.calculationsThisMonth || 0))} расчетов осталось)
                 </span>
               )}
             </div>
@@ -40,6 +40,8 @@ function App() {
         </div>
       )}
 
+      {/* ИЗМЕНИТЬ все ссылки - добавить /app/ в начало */}
+
       {/* Категория: Delivery */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">Delivery</h2>
@@ -47,23 +49,23 @@ function App() {
           <Card
             title="Velocity"
             description="Расчет средней скорости команды"
-            to="/velocity"
-            hasAccess={checkAccess('velocity')} // ДОБАВИТЬ
-            planRequired={!checkAccess('velocity') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/velocity" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('velocity')}
+            planRequired={!checkAccess('velocity') ? 'PRO' : null}
           />
           <Card
             title="Cycle Time"
             description="Время выполнения задачи"
-            to="/cycletime"
-            hasAccess={checkAccess('cycletime')} // ДОБАВИТЬ
-            planRequired={!checkAccess('cycletime') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/cycletime" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('cycletime')}
+            planRequired={!checkAccess('cycletime') ? 'PRO' : null}
           />
           <Card
             title="Deployment Frequency"
             description="Частота деплоев"
-            to="/deploymentfrequency"
-            hasAccess={checkAccess('deploymentfrequency')} // ДОБАВИТЬ
-            planRequired={!checkAccess('deploymentfrequency') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/deploymentfrequency" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('deploymentfrequency')}
+            planRequired={!checkAccess('deploymentfrequency') ? 'PRO' : null}
           />
         </div>
       </div>
@@ -75,16 +77,16 @@ function App() {
           <Card
             title="Defect Leakage"
             description="Анализ багов и качества"
-            to="/defectleakage"
-            hasAccess={checkAccess('defectleakage')} // ДОБАВИТЬ
-            planRequired={!checkAccess('defectleakage') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/defectleakage" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('defectleakage')}
+            planRequired={!checkAccess('defectleakage') ? 'PRO' : null}
           />
           <Card
             title="MTTR"
             description="Среднее время восстановления"
-            to="/mttr"
-            hasAccess={checkAccess('mttr')} // ДОБАВИТЬ
-            planRequired={!checkAccess('mttr') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/mttr" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('mttr')}
+            planRequired={!checkAccess('mttr') ? 'PRO' : null}
           />
         </div>
       </div>
@@ -96,23 +98,23 @@ function App() {
           <Card
             title="CAC"
             description="Customer Acquisition Cost"
-            to="/cac"
-            hasAccess={checkAccess('cac')} // ДОБАВИТЬ
-            planRequired={!checkAccess('cac') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/cac" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('cac')}
+            planRequired={!checkAccess('cac') ? 'PRO' : null}
           />
           <Card
             title="ROMI"
             description="Return on Marketing Investment"
-            to="/romi"
-            hasAccess={checkAccess('romi')} // ДОБАВИТЬ
-            planRequired={!checkAccess('romi') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/romi" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('romi')}
+            planRequired={!checkAccess('romi') ? 'PRO' : null}
           />
           <Card
             title="LTV"
             description="Lifetime Value"
-            to="/ltv"
-            hasAccess={checkAccess('ltv')} // ДОБАВИТЬ
-            planRequired={!checkAccess('ltv') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/ltv" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('ltv')}
+            planRequired={!checkAccess('ltv') ? 'PRO' : null}
           />
         </div>
       </div>
@@ -124,23 +126,23 @@ function App() {
           <Card
             title="EBITDA"
             description="Прибыль до налогообложения"
-            to="/ebitda"
-            hasAccess={checkAccess('ebitda')} // ДОБАВИТЬ
-            planRequired={!checkAccess('ebitda') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/ebitda" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('ebitda')}
+            planRequired={!checkAccess('ebitda') ? 'PRO' : null}
           />
           <Card
             title="ROS"
             description="Return on Sales"
-            to="/ros"
-            hasAccess={checkAccess('ros')} // ДОБАВИТЬ
-            planRequired={!checkAccess('ros') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/ros" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('ros')}
+            planRequired={!checkAccess('ros') ? 'PRO' : null}
           />
           <Card
             title="BEP"
             description="Break-even point"
-            to="/bep"
-            hasAccess={checkAccess('bep')} // ДОБАВИТЬ
-            planRequired={!checkAccess('bep') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/bep" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('bep')}
+            planRequired={!checkAccess('bep') ? 'PRO' : null}
           />
         </div>
       </div>
@@ -152,9 +154,9 @@ function App() {
           <Card
             title="Custom Metric"
             description="Пользовательская метрика"
-            to="/custommetric"
-            hasAccess={checkAccess('custommetric')} // ДОБАВИТЬ
-            planRequired={!checkAccess('custommetric') ? 'PRO' : null} // ДОБАВИТЬ
+            to="/app/custommetric" // ИЗМЕНИТЬ
+            hasAccess={checkAccess('custommetric')}
+            planRequired={!checkAccess('custommetric') ? 'PRO' : null}
           />
         </div>
       </div>
@@ -166,8 +168,8 @@ function App() {
           <Card
             title="Управление данными"
             description="Экспорт и управление сохраненными данными"
-            to="/data-manager"
-            hasAccess={true} // Всегда доступно
+            to="/app/data-manager" // ИЗМЕНИТЬ
+            hasAccess={true}
           />
         </div>
       </div>
@@ -175,7 +177,6 @@ function App() {
   );
 }
 
-// ОБНОВИТЬ функцию Card:
 function Card({ title, description, to, hasAccess = true, planRequired = null }) {
   return (
     <Link
@@ -184,7 +185,6 @@ function Card({ title, description, to, hasAccess = true, planRequired = null })
         !hasAccess ? 'opacity-75' : ''
       }`}
     >
-      {/* Индикатор ограничения доступа */}
       {!hasAccess && (
         <div className="absolute top-3 right-3">
           <div className="bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
@@ -193,7 +193,6 @@ function Card({ title, description, to, hasAccess = true, planRequired = null })
         </div>
       )}
 
-      {/* Иконка блокировки */}
       {!hasAccess && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-xl">
           <span className="text-4xl">🔒</span>

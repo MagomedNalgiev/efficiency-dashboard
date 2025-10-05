@@ -2,23 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://metricspace.ru/</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://metricspace.ru/velocity</loc>
+    <loc>https://metricspace.ru/pricing</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://metricspace.ru/cycletime</loc>
+    <loc>https://metricspace.ru/app</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://metricspace.ru/mttr</loc>
+    <loc>https://metricspace.ru/app/velocity</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://metricspace.ru/deploymentfrequency</loc>
+    <loc>https://metricspace.ru/app/cycletime</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://metricspace.ru/defectleakage</loc>
-  </url>
-  <url>
-    <loc>https://metricspace.ru/custommetric</loc>
+    <loc>https://metricspace.ru/app/mttr</loc>
+    <lastmod>2025-10-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
