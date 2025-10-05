@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import { initGA, initYM } from '@utils/analytics'
+import { AuthProvider } from './contexts/AuthContext'
 import DataManager from './components/DataManager.jsx'
 import Layout from './components/Layout';
 import App from './App.jsx';
@@ -25,29 +26,30 @@ initYM()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        {/* Layout — общая обёртка с сайдбаром и шапкой */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<App />} />
-          <Route path="velocity" element={<CalculatorVelocity />} />
-          <Route path="cycletime" element={<CalculatorCycleTime />} />
-          <Route path="mttr" element={<CalculatorMTTR />} />
-          <Route path="deploymentfrequency" element={<CalculatorDeploymentFrequency />} />
-          <Route path="defectleakage" element={<CalculatorDefectLeakage />} />
-          <Route path="custommetric" element={<CalculatorCustomMetric />} />
-          <Route path="/cac" element={<CalculatorCAC />} />
-          <Route path="/romi" element={<CalculatorROMI />} />
-          <Route path="/ltv" element={<CalculatorLTV />} />
-          <Route path="/ebitda" element={<CalculatorEBITDA />} />
-          <Route path="/ros" element={<CalculatorROS />} />
-          <Route path="/bep" element={<CalculatorBEP />} />
-          <Route path="data-manager" element={<DataManager />} />
+      <AuthProvider>
 
+        <BrowserRouter>
+          <Routes>
+            {/* Layout — общая обёртка с сайдбаром и шапкой */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<App />} />
+              <Route path="velocity" element={<CalculatorVelocity />} />
+              <Route path="cycletime" element={<CalculatorCycleTime />} />
+              <Route path="mttr" element={<CalculatorMTTR />} />
+              <Route path="deploymentfrequency" element={<CalculatorDeploymentFrequency />} />
+              <Route path="defectleakage" element={<CalculatorDefectLeakage />} />
+              <Route path="custommetric" element={<CalculatorCustomMetric />} />
+              <Route path="/cac" element={<CalculatorCAC />} />
+              <Route path="/romi" element={<CalculatorROMI />} />
+              <Route path="/ltv" element={<CalculatorLTV />} />
+              <Route path="/ebitda" element={<CalculatorEBITDA />} />
+              <Route path="/ros" element={<CalculatorROS />} />
+              <Route path="/bep" element={<CalculatorBEP />} />
+              <Route path="data-manager" element={<DataManager />} />
 
-
-        </Route>
-      </Routes>
-    </BrowserRouter>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
   </React.StrictMode>,
 );
