@@ -52,6 +52,13 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
+  // ИСПРАВЛЕНО: Вынесли логику очистки в отдельную функцию
+  const clearAuthData = () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_profile')
+    dispatch({ type: 'LOGOUT' })
+  }
+
   // Проверка токена при загрузке
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
@@ -66,10 +73,10 @@ export const AuthProvider = ({ children }) => {
         })
       } catch (error) {
         console.error('Error parsing user profile:', error)
-        logout()
+        clearAuthData() // ИСПРАВЛЕНО: Используем локальную функцию
       }
     }
-  }, [])
+  }, []) // Пустой массив зависимостей
 
   const login = async (credentials) => {
     dispatch({ type: 'LOGIN_START' })
@@ -136,9 +143,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await apiService.logout()
-    localStorage.removeItem('user_profile')
-    dispatch({ type: 'LOGOUT' })
-
+    clearAuthData()
     trackEvent('user_logout')
   }
 

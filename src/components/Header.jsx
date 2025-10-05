@@ -5,17 +5,14 @@ import AuthModal from "./auth/AuthModal"
 
 export default function Header({ toggleMenu, menuOpen }) {
   const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [authMode, setAuthMode] = useState('login')
   const { isAuthenticated, user, logout } = useAuth()
 
-  const handleAuthClick = (mode) => {
-    setAuthMode(mode)
+  const handleAuthClick = () => {
     setAuthModalOpen(true)
   }
 
   const handleLogout = async () => {
     await logout()
-    // Можно добавить уведомление об успешном выходе
   }
 
   return (
@@ -38,8 +35,9 @@ export default function Header({ toggleMenu, menuOpen }) {
         <div className="flex items-center space-x-3">
           {isAuthenticated ? (
             <>
+              {/* ИСПРАВЛЕНО: убрали "Привет," */}
               <span className="text-white/80 hidden md:inline">
-                Привет, {user?.name}!
+                {user?.name}
               </span>
               <button
                 onClick={handleLogout}
@@ -49,20 +47,13 @@ export default function Header({ toggleMenu, menuOpen }) {
               </button>
             </>
           ) : (
-            <>
-              <button
-                onClick={() => handleAuthClick('login')}
-                className="text-white/80 hover:text-white transition-colors"
-              >
-                Вход
-              </button>
-              <button
-                onClick={() => handleAuthClick('register')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Регистрация
-              </button>
-            </>
+            /* ИСПРАВЛЕНО: только одна кнопка "Войти" */
+            <button
+              onClick={handleAuthClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Войти
+            </button>
           )}
         </div>
       </header>
@@ -71,7 +62,7 @@ export default function Header({ toggleMenu, menuOpen }) {
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        initialMode={authMode}
+        initialMode="login" // ИСПРАВЛЕНО: всегда начинаем с входа
       />
     </>
   )

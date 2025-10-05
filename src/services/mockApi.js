@@ -50,6 +50,7 @@ class MockApiService {
     }
 
     localStorage.setItem('mock_current_user', JSON.stringify(user)) // ДОБАВЛЕНО
+    this.currentUser = user // ДОБАВЛЕНО
 
     const token = `mock_token_${user.id}`
 
@@ -76,7 +77,7 @@ class MockApiService {
     return { success: true }
   }
 
-  // ДОБАВЬТЕ ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ДЛЯ СОВМЕСТИМОСТИ:
+  // ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ для совместимости:
   async updateProfile(profileData) {
     await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -87,6 +88,13 @@ class MockApiService {
     const updatedUser = { ...this.currentUser, ...profileData }
     localStorage.setItem('mock_current_user', JSON.stringify(updatedUser))
     this.currentUser = updatedUser
+
+    // Обновляем в списке пользователей
+    const userIndex = this.users.findIndex(u => u.id === updatedUser.id)
+    if (userIndex >= 0) {
+      this.users[userIndex] = updatedUser
+      localStorage.setItem('mock_users', JSON.stringify(this.users))
+    }
 
     return updatedUser
   }
