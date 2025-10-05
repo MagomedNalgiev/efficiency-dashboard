@@ -1,6 +1,4 @@
-import { useState } from "react"
 import { Line } from "react-chartjs-2"
-
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,69 +9,60 @@ import {
   Tooltip,
   Legend,
 } from "chart.js"
-import SaveIndicator from "@components/SaveIndicator"
-import { useLocalStorage } from "@hooks/useLocalStorage"
-import { trackCalculatorUsage, trackEvent } from "@utils/analytics"
+import { useCalculator } from "@hooks/useCalculator"
+import { useCalculatorAccess } from "../hooks/useCalculatorAccess" // ДОБАВИТЬ
+import AccessGate from "./subscription/AccessGate" // ДОБАВИТЬ
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const STORAGE_KEY = 'metricspace_custom_metric_data'
+const INITIAL_DATA = [{ name: "", value: "", formula: "" }]
 
 export default function CalculatorCustomMetric() {
-  const [labels, setLabels] = useLocalStorage(`${STORAGE_KEY}_labels`, "")
-  const [values, setValues] = useLocalStorage(`${STORAGE_KEY}_values`, "")
-  const [lastSaved, setLastSaved] = useLocalStorage(`${STORAGE_KEY}_saved`, null)
-  const [isModified, setIsModified] = useState(false)
+  const { performCalculation } = useCalculatorAccess('custommetric') // ДОБАВИТЬ
 
-  const handleLabelsChange = (newLabels) => {
-    setLabels(newLabels)
-    setIsModified(true)
-    setLastSaved(Date.now())
+  const {
+    data: metrics,
+    results,
+    lastSaved,
+    isModified,
+    hasCalculated,
+    addItem,
+    removeItem,
+    updateItem,
+    calculate,
+    clearAllData
+  } = useCalculator('custommetric', INITIAL_DATA, STORAGE_KEY)
+
+  const handleChange = (index, field, value) => {
+    updateItem(index, field, value)
   }
 
-  const handleValuesChange = (newValues) => {
-    setValues(newValues)
-    setIsModified(true)
-    setLastSaved(Date.now())
+  const addMetric = () => {
+    addItem({ name: "", value: "", formula: "" })
   }
 
-  const buildChart = () => {
-    setIsModified(false)
-
-    trackCalculatorUsage('custom_metric')
-    trackEvent('calculation_completed', {
-      calculator: 'custom_metric',
-      labels_count: labels.split(',').length,
-      values_count: values.split(',').length
+  const calculateCustom = () => {
+    const result = performCalculation(() => {
+      return metrics.map(metric => parseFloat(metric.value) || 0)
     })
-  }
 
-  const clearAllData = () => {
-    if (confirm('Очистить все данные? Это действие нельзя отменить.')) {
-      setLabels("")
-      setValues("")
-      setLastSaved(Date.now())
-      setIsModified(false)
-
-      trackEvent('data_cleared', {
-        calculator: 'custom_metric'
-      })
+    if (result) {
+      calculate(() => result)
     }
   }
 
-  // Парсим данные для графика
-  const labelsArray = labels.split(',').map(label => label.trim()).filter(label => label)
-  const valuesArray = values.split(',').map(value => parseFloat(value.trim())).filter(value => !isNaN(value))
-
-  const hasValidData = labelsArray.length > 0 && valuesArray.length > 0
+  const avgValue = results.length > 0
+    ? (results.reduce((sum, val) => sum + parseFloat(val), 0) / results.length).toFixed(2)
+    : 0
 
   const data = {
-    labels: labelsArray,
+    labels: metrics.map(metric => metric.name || `Метрика ${metrics.indexOf(metric) + 1}`),
     datasets: [{
-      label: "Пользовательская метрика",
-      data: valuesArray,
-      borderColor: "rgb(168,85,247)",
-      backgroundColor: "rgba(168,85,247,0.3)",
+      label: "Значение",
+      data: results,
+      borderColor: "rgb(99,102,241)",
+      backgroundColor: "rgba(99,102,241,0.3)",
       tension: 0.1,
     }],
   }
@@ -82,110 +71,144 @@ export default function CalculatorCustomMetric() {
     responsive: true,
     plugins: {
       legend: { labels: { color: "#ffffff" } },
-      title: { display: true, text: 'Пользовательская метрика', color: '#ffffff' }
+      title: { display: true, text: 'Пользовательские метрики', color: '#ffffff' }
     },
     scales: {
       x: { ticks: { color: "#ffffff" }, grid: { color: "rgba(255,255,255,0.1)" } },
       y: {
         ticks: { color: "#ffffff" },
         grid: { color: "rgba(255,255,255,0.1)" },
-        title: { display: true, text: 'Значения', color: '#ffffff' }
+        title: { display: true, text: 'Значение', color: '#ffffff' }
       },
     },
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-6">Custom Metric</h1>
-          <p className="text-white/80 mb-8">
-            Введите метки (через запятую) и значения (через запятую), чтобы построить свой собственный график для анализа метрик.
-            Данные автоматически сохраняются.
-          </p>
+    <AccessGate calculatorId="custommetric"> {/* ДОБАВИТЬ AccessGate */}
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl font-bold text-white mb-6">Custom Metric</h1>
+            <p className="text-white/80 mb-8">
+              Создайте и отслеживайте собственные метрики. Укажите название метрики,
+              её значение и формулу расчета для будущего использования.
+            </p>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-white mb-2 font-medium">Метки (через запятую):</label>
-                <input
-                  type="text"
-                  value={labels}
-                  onChange={(e) => handleLabelsChange(e.target.value)}
-                  className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Например: Январь, Февраль, Март, Апрель"
-                />
-                <p className="text-white/60 text-sm mt-1">
-                  Найдено меток: {labelsArray.length}
-                </p>
-              </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
+              {metrics.map((metric, index) => (
+                <div key={index} className="mb-6 p-4 bg-white/5 rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xl font-semibold text-white">Метрика {index + 1}</h3>
+                    {metrics.length > 1 && (
+                      <button
+                        onClick={() => removeItem(index)}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-white mb-2 font-medium">Значения (через запятую):</label>
-                <input
-                  type="text"
-                  value={values}
-                  onChange={(e) => handleValuesChange(e.target.value)}
-                  className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Например: 10, 15, 8, 22"
-                />
-                <p className="text-white/60 text-sm mt-1">
-                  Найдено значений: {valuesArray.length}
-                </p>
-              </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-white mb-2">Название метрики:</label>
+                      <input
+                        type="text"
+                        value={metric.name}
+                        onChange={(e) => handleChange(index, 'name', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Например: Satisfaction Score"
+                      />
+                    </div>
 
-              {labelsArray.length !== valuesArray.length && labelsArray.length > 0 && valuesArray.length > 0 && (
-                <div className="p-3 bg-yellow-500/20 rounded text-yellow-300">
-                  ⚠️ Количество меток ({labelsArray.length}) не совпадает с количеством значений ({valuesArray.length}).
-                  График может отображаться некорректно.
-                </div>
-              )}
-            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-white mb-2">Значение:</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={metric.value}
+                          onChange={(e) => handleChange(index, 'value', e.target.value)}
+                          className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Например: 8.5"
+                        />
+                      </div>
 
-            <div className="flex flex-wrap gap-4 mt-6">
-              <button
-                onClick={buildChart}
-                disabled={!hasValidData}
-                className={`px-6 py-2 rounded-lg transition duration-200 ${
-                  hasValidData
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gray-600 text-gray-300 cursor-not-allowed'
-                }`}
-              >
-                Построить график
-              </button>
+                      <div>
+                        <label className="block text-white mb-2">Единица измерения:</label>
+                        <input
+                          type="text"
+                          value={metric.unit}
+                          onChange={(e) => handleChange(index, 'unit', e.target.value)}
+                          className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Например: баллы, %, шт"
+                        />
+                      </div>
+                    </div>
 
-              <button
-                onClick={clearAllData}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
-              >
-                Очистить всё
-              </button>
-            </div>
+                    <div>
+                      <label className="block text-white mb-2">Формула расчета (опционально):</label>
+                      <textarea
+                        value={metric.formula}
+                        onChange={(e) => handleChange(index, 'formula', e.target.value)}
+                        rows="3"
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Например: (Положительные отзывы / Общее количество отзывов) * 10"
+                      />
+                    </div>
+                  </div>
 
-            <SaveIndicator lastSaved={lastSaved} isModified={isModified} />
-          </div>
-
-          {hasValidData && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-              <div className="mb-4 text-center">
-                <h3 className="text-2xl font-bold text-white mb-2">Ваш график</h3>
-                <div className="text-white/80 text-sm">
-                  <p>Точек данных: {Math.min(labelsArray.length, valuesArray.length)}</p>
-                  {valuesArray.length > 0 && (
-                    <p>
-                      Среднее значение: <span className="text-purple-400 font-bold">
-                        {(valuesArray.reduce((sum, val) => sum + val, 0) / valuesArray.length).toFixed(2)}
-                      </span>
-                    </p>
+                  {results[index] && (
+                    <div className="mt-3 p-2 bg-indigo-500/20 rounded text-indigo-300">
+                      <strong>{metric.name || 'Метрика'}: {results[index]} {metric.unit || ''}</strong>
+                      {metric.formula && (
+                        <p className="text-sm text-indigo-300/70 mt-1">
+                          Формула: {metric.formula}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
+              ))}
+
+              <div className="flex flex-wrap gap-4 mt-6">
+                <button
+                  onClick={addMetric}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Добавить метрику
+                </button>
+
+                <button
+                  onClick={calculateCustom}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Сохранить метрики
+                </button>
+
+                <button
+                  onClick={clearAllData}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                >
+                  Очистить всё
+                </button>
               </div>
-              <Line data={data} options={options} />
             </div>
-          )}
+
+            {results.length > 0 && hasCalculated && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="mb-4 text-center">
+                  <h3 className="text-2xl font-bold text-white mb-2">Ваши метрики</h3>
+                  <p className="text-white/80">
+                    Среднее значение: <span className="text-indigo-400 font-bold">{avgValue}</span>
+                  </p>
+                </div>
+                <Line data={data} options={options} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </AccessGate>
   )
 }

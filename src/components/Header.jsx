@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
+import { useSubscription } from "../contexts/SubscriptionContext" // ДОБАВИТЬ
 import AuthModal from "./auth/AuthModal"
 
 export default function Header({ toggleMenu, menuOpen }) {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
+  const { currentPlan, usage, currentPlanInfo } = useSubscription() // ДОБАВИТЬ
 
   const handleAuthClick = () => {
     setAuthModalOpen(true)
@@ -33,13 +35,22 @@ export default function Header({ toggleMenu, menuOpen }) {
 
         {/* Навигация и аутентификация СПРАВА */}
         <div className="flex items-center space-x-4">
-          {/* ДОБАВИТЬ кнопку Тарифы */}
           <Link
             to="/pricing"
             className="text-white/80 hover:text-white transition-colors hidden md:inline"
           >
             Тарифы
           </Link>
+
+          {/* ДОБАВИТЬ: Индикатор использования для FREE плана */}
+          {isAuthenticated && currentPlan === 'FREE' && currentPlanInfo && (
+            <div className="hidden md:flex items-center space-x-2 bg-orange-500/20 px-3 py-1 rounded-full">
+              <span className="text-orange-400 text-sm">
+                {usage.calculationsThisMonth || 0}/{currentPlanInfo.limits.calculationsPerMonth}
+              </span>
+              <span className="text-orange-300 text-xs">расчетов</span>
+            </div>
+          )}
 
           {isAuthenticated ? (
             <>

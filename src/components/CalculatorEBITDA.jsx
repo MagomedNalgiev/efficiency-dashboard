@@ -1,23 +1,25 @@
-import { Line } from "react-chartjs-2"
+import { Bar } from "react-chartjs-2"
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js"
-import SaveIndicator from "@components/SaveIndicator"
 import { useCalculator } from "@hooks/useCalculator"
+import { useCalculatorAccess } from "../hooks/useCalculatorAccess" // ДОБАВИТЬ
+import AccessGate from "./subscription/AccessGate" // ДОБАВИТЬ
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const STORAGE_KEY = 'metricspace_ebitda_data'
-const INITIAL_DATA = [{ revenue: "", opex: "", depreciation: "" }]
+const INITIAL_DATA = [{ revenue: "", expenses: "", depreciation: "", interest: "", tax: "" }]
 
 export default function CalculatorEBITDA() {
+  const { performCalculation } = useCalculatorAccess('ebitda') // ДОБАВИТЬ
+
   const {
     data: periods,
     results,
@@ -36,20 +38,27 @@ export default function CalculatorEBITDA() {
   }
 
   const addPeriod = () => {
-    addItem({ revenue: "", opex: "", depreciation: "" })
+    addItem({ revenue: "", expenses: "", depreciation: "", interest: "", tax: "" })
   }
 
   const calculateEBITDA = () => {
-    calculate((data) => {
-      return data.map(period => {
+    const result = performCalculation(() => {
+      return periods.map(period => {
         const revenue = parseFloat(period.revenue) || 0
-        const opex = parseFloat(period.opex) || 0
+        const expenses = parseFloat(period.expenses) || 0
         const depreciation = parseFloat(period.depreciation) || 0
+        const interest = parseFloat(period.interest) || 0
+        const tax = parseFloat(period.tax) || 0
 
-        const ebitda = revenue - opex + depreciation
+        // EBITDA = Revenue - Operating Expenses + Depreciation + Interest + Tax
+        const ebitda = revenue - expenses + depreciation + interest + tax
         return ebitda.toFixed(0)
       })
     })
+
+    if (result) {
+      calculate(() => result)
+    }
   }
 
   const avgEBITDA = results.length > 0
@@ -61,9 +70,9 @@ export default function CalculatorEBITDA() {
     datasets: [{
       label: "EBITDA (₽)",
       data: results,
-      borderColor: "rgb(99,102,241)",
-      backgroundColor: "rgba(99,102,241,0.3)",
-      tension: 0.1,
+      backgroundColor: results.map(r => parseFloat(r) > 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)"),
+      borderColor: results.map(r => parseFloat(r) > 0 ? "rgb(34,197,94)" : "rgb(239,68,68)"),
+      borderWidth: 1,
     }],
   }
 
@@ -84,117 +93,139 @@ export default function CalculatorEBITDA() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-6">EBITDA</h1>
-          <p className="text-white/80 mb-8">
-            Укажите выручку, операционные расходы и амортизацию, чтобы рассчитать EBITDA (прибыль до вычета процентов, налогов и амортизации).
-            Данные автоматически сохраняются.
-          </p>
+    <AccessGate calculatorId="ebitda"> {/* ДОБАВИТЬ AccessGate */}
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl font-bold text-white mb-6">EBITDA</h1>
+            <p className="text-white/80 mb-8">
+              Earnings Before Interest, Taxes, Depreciation and Amortization -
+              прибыль до уплаты процентов, налогов и амортизации.
+              Ключевой показатель операционной эффективности компании.
+            </p>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
-            {periods.map((period, index) => (
-              <div key={index} className="mb-6 p-4 bg-white/5 rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-xl font-semibold text-white">Период {index + 1}</h3>
-                  {periods.length > 1 && (
-                    <button
-                      onClick={() => removeItem(index)}
-                      className="text-red-400 hover:text-red-300 text-sm"
-                    >
-                      Удалить
-                    </button>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
+              {periods.map((period, index) => (
+                <div key={index} className="mb-6 p-4 bg-white/5 rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xl font-semibold text-white">Период {index + 1}</h3>
+                    {periods.length > 1 && (
+                      <button
+                        onClick={() => removeItem(index)}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-white mb-2">Выручка (₽):</label>
+                      <input
+                        type="number"
+                        value={period.revenue}
+                        onChange={(e) => handleChange(index, 'revenue', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Например: 1000000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-white mb-2">Операционные расходы (₽):</label>
+                      <input
+                        type="number"
+                        value={period.expenses}
+                        onChange={(e) => handleChange(index, 'expenses', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Например: 700000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-white mb-2">Амортизация (₽):</label>
+                      <input
+                        type="number"
+                        value={period.depreciation}
+                        onChange={(e) => handleChange(index, 'depreciation', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Например: 50000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-white mb-2">Проценты по кредитам (₽):</label>
+                      <input
+                        type="number"
+                        value={period.interest}
+                        onChange={(e) => handleChange(index, 'interest', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Например: 30000"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-white mb-2">Налоги (₽):</label>
+                      <input
+                        type="number"
+                        value={period.tax}
+                        onChange={(e) => handleChange(index, 'tax', e.target.value)}
+                        className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Например: 80000"
+                      />
+                    </div>
+                  </div>
+
+                  {results[index] && (
+                    <div className={`mt-3 p-2 rounded ${
+                      parseFloat(results[index]) > 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                    }`}>
+                      <strong>EBITDA: {parseInt(results[index]).toLocaleString()} ₽</strong>
+                    </div>
                   )}
                 </div>
+              ))}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-white mb-2">Выручка (₽):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={period.revenue}
-                      onChange={(e) => handleChange(index, 'revenue', e.target.value)}
-                      className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Например: 1000000"
-                    />
-                  </div>
+              <div className="flex flex-wrap gap-4 mt-6">
+                <button
+                  onClick={addPeriod}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Добавить период
+                </button>
 
-                  <div>
-                    <label className="block text-white mb-2">Операционные расходы (₽):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={period.opex}
-                      onChange={(e) => handleChange(index, 'opex', e.target.value)}
-                      className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Например: 700000"
-                    />
-                  </div>
+                <button
+                  onClick={calculateEBITDA}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Рассчитать EBITDA
+                </button>
 
-                  <div>
-                    <label className="block text-white mb-2">Амортизация (₽):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={period.depreciation}
-                      onChange={(e) => handleChange(index, 'depreciation', e.target.value)}
-                      className="w-full p-3 rounded bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Например: 50000"
-                    />
-                  </div>
+                <button
+                  onClick={clearAllData}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                >
+                  Очистить всё
+                </button>
+              </div>
+            </div>
+
+            {results.length > 0 && hasCalculated && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="mb-4 text-center">
+                  <h3 className="text-2xl font-bold text-white mb-2">Результаты</h3>
+                  <p className="text-white/80">
+                    Средний EBITDA: <span className={`font-bold ${
+                      parseFloat(avgEBITDA) > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>{parseInt(avgEBITDA).toLocaleString()} ₽</span>
+                  </p>
                 </div>
-
-                {results[index] !== undefined && (
-                  <div className={`mt-3 p-2 rounded ${parseFloat(results[index]) > 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                    <strong>EBITDA: {parseFloat(results[index]).toLocaleString()} ₽</strong>
-                  </div>
-                )}
+                <Bar data={data} options={options} />
               </div>
-            ))}
-
-            <div className="flex flex-wrap gap-4 mt-6">
-              <button
-                onClick={addPeriod}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
-              >
-                Добавить период
-              </button>
-
-              <button
-                onClick={calculateEBITDA}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200"
-              >
-                Рассчитать EBITDA
-              </button>
-
-              <button
-                onClick={clearAllData}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
-              >
-                Очистить всё
-              </button>
-            </div>
-
-            <SaveIndicator lastSaved={lastSaved} isModified={isModified} />
+            )}
           </div>
-
-          {results.length > 0 && hasCalculated && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-              <div className="mb-4 text-center">
-                <h3 className="text-2xl font-bold text-white mb-2">Результаты</h3>
-                <p className="text-white/80">
-                  Средний EBITDA: <span className={`font-bold ${parseFloat(avgEBITDA) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {parseFloat(avgEBITDA).toLocaleString()} ₽
-                  </span>
-                </p>
-              </div>
-              <Line data={data} options={options} />
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </AccessGate>
   )
 }
