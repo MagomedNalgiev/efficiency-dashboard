@@ -133,24 +133,46 @@ class SupabaseAuthService {
       try {
         const normalizedEmail = this.normalizeEmail(email)
 
-        console.log('Поиск пользователя по email:', normalizedEmail)
+        console.log('=== ПОИСК ПОЛЬЗОВАТЕЛЯ ===')
+        console.log('Нормализованный email:', normalizedEmail)
 
-        // Используем новый метод из supabaseApi
-        const user = await supabaseApi.findByEmail(normalizedEmail)
+        const url = `${SUPABASE_CONFIG.url}${SUPABASE_CONFIG.endpoints.rest}/user_profiles?email=eq.${encodeURIComponent(normalizedEmail)}&select=*`
 
-        if (!user) {
-          console.log('Пользователь не найден:', normalizedEmail)
+        console.log('URL запроса:', url)
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Accept': 'application/json'
+          }
+        })
+
+        console.log('Статус ответа:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Ошибка запроса:', errorText)
           return null
         }
 
-        console.log('Пользователь найден:', user.name, user.email)
-        return user
+        const data = await response.json()
+        console.log('Данные ответа:', data)
+
+        if (!data || data.length === 0) {
+          console.log('Пользователь не найден')
+          return null
+        }
+
+        console.log('Пользователь найден:', data[0])
+        return data[0]
 
       } catch (error) {
-        console.error('Ошибка поиска пользователя:', error)
+        console.error('Исключение при поиске:', error)
         return null
       }
-  }
+    }
 
   // Обновление плана пользователя (после оплаты)
   async updateUserPlan(userId, planId, billingPeriod) {
