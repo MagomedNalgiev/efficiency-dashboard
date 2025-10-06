@@ -130,34 +130,26 @@ class SupabaseAuthService {
 
   // ИСПРАВЛЕННЫЙ поиск пользователя по email
   async findUserByEmail(email) {
-    try {
-      const normalizedEmail = this.normalizeEmail(email)
+      try {
+        const normalizedEmail = this.normalizeEmail(email)
 
-      console.log('Поиск пользователя по email:', normalizedEmail)
+        console.log('Поиск пользователя по email:', normalizedEmail)
 
-      // Делаем запрос без single:true, чтобы получить массив
-      const users = await supabaseApi.select('user_profiles', {
-        select: '*',
-        eq: ['email', normalizedEmail]
-      })
+        // Используем новый метод из supabaseApi
+        const user = await supabaseApi.findByEmail(normalizedEmail)
 
-      console.log('Результат поиска пользователя:', users)
+        if (!user) {
+          console.log('Пользователь не найден:', normalizedEmail)
+          return null
+        }
 
-      // Если массив пустой - пользователь не найден
-      if (!users || users.length === 0) {
-        console.log('Пользователь не найден:', normalizedEmail)
+        console.log('Пользователь найден:', user.name, user.email)
+        return user
+
+      } catch (error) {
+        console.error('Ошибка поиска пользователя:', error)
         return null
       }
-
-      // Возвращаем первого найденного пользователя
-      const user = users[0]
-      console.log('Пользователь найден:', user.name, user.email)
-      return user
-
-    } catch (error) {
-      console.error('Ошибка поиска пользователя:', error)
-      return null
-    }
   }
 
   // Обновление плана пользователя (после оплаты)

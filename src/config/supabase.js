@@ -39,9 +39,12 @@ export const supabaseApi = {
       params.push(`select=${options.select}`)
     }
 
+    // ИСПРАВЛЕНО: правильная обработка eq параметра
     if (options.eq) {
       const [field, value] = options.eq
-      params.push(`${field}=eq.${encodeURIComponent(value)}`)
+      // Убеждаемся, что value - это строка
+      const stringValue = String(value)
+      params.push(`${field}=eq.${encodeURIComponent(stringValue)}`)
     }
 
     if (options.single) {
@@ -140,5 +143,38 @@ export const supabaseApi = {
     console.log('Supabase UPDATE Result:', result)
 
     return Array.isArray(result) ? result[0] : result
+  },
+
+  // ДОПОЛНИТЕЛЬНЫЙ метод для поиска пользователя по email (более надежный)
+  async findByEmail(email) {
+    try {
+      const normalizedEmail = String(email).trim().toLowerCase()
+
+      console.log('Поиск пользователя по email:', normalizedEmail)
+
+      const url = `${SUPABASE_CONFIG.url}${SUPABASE_CONFIG.endpoints.rest}/user_profiles?email=eq.${encodeURIComponent(normalizedEmail)}&select=*`
+
+      console.log('Final URL:', url)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: this.getHeaders(false)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('findByEmail error:', errorText)
+        return null
+      }
+
+      const data = await response.json()
+      console.log('findByEmail result:', data)
+
+      return data && data.length > 0 ? data[0] : null
+
+    } catch (error) {
+      console.error('findByEmail exception:', error)
+      return null
+    }
   }
 }
