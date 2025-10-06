@@ -1,187 +1,91 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
-import { apiService } from '../services/api'
-import { trackEvent } from '../utils/analytics'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { supabaseAuthService } from '../services/supabaseAuthService'
 
 const AuthContext = createContext()
 
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case 'LOGIN_START':
-      return { ...state, loading: true, error: null }
-    case 'LOGIN_SUCCESS':
-      return {
-        ...state,
-        loading: false,
-        isAuthenticated: true,
-        user: action.payload.user,
-        token: action.payload.token,
-        error: null,
-      }
-    case 'LOGIN_FAILURE':
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-        isAuthenticated: false,
-      }
-    case 'LOGOUT':
-      return {
-        ...state,
-        isAuthenticated: false,
-        user: null,
-        token: null,
-      }
-    case 'SET_USER':
-      return {
-        ...state,
-        user: action.payload,
-      }
-    default:
-      return state
-  }
-}
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-const initialState = {
-  isAuthenticated: false,
-  user: null,
-  token: localStorage.getItem('auth_token'),
-  loading: false,
-  error: null,
-}
-
-export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState)
-
-  // ИСПРАВЛЕНО: Вынесли логику очистки в отдельную функцию
-  const clearAuthData = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user_profile')
-    dispatch({ type: 'LOGOUT' })
-  }
-
-  // Проверка токена при загрузке
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    const userProfile = localStorage.getItem('user_profile')
-
-    // ДОБАВИМ ОТЛАДКУ:
-    console.log('AuthContext восстановление:', { token, userProfile })
-
-    if (token && userProfile) {
-      try {
-        const user = JSON.parse(userProfile)
-        console.log('Восстанавливаем пользователя:', user)
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: { user, token }
-        })
-      } catch (error) {
-        console.error('Error parsing user profile:', error)
-        clearAuthData() // ИСПРАВЛЕНО: Используем локальную функцию
-      }
-    }
-  }, []) // Пустой массив зависимостей
-
-  const login = async (credentials) => {
-    dispatch({ type: 'LOGIN_START' })
-
-    try {
-      const response = await apiService.login(credentials)
-
-      console.log('Ответ login:', response) // ДОБАВИМ ОТЛАДКУ
-
-      // Сохраняем профиль пользователя
-      localStorage.setItem('user_profile', JSON.stringify(response.user))
-
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: {
-          user: response.user,
-          token: response.token,
-        },
-      })
-
-      trackEvent('user_login', {
-        user_id: response.user.id,
-        login_method: 'email'
-      })
-
-      return response
-    } catch (error) {
-      dispatch({
-        type: 'LOGIN_FAILURE',
-        payload: error.message,
-      })
-      throw error
-    }
-  }
+    // Загружаем сессию при старте
+    const savedUser = supabaseAuthService.getCurrentUser()
+    setUser(savedUser)
+    setLoading(false)
+  }, [])
 
   const register = async (userData) => {
-    dispatch({ type: 'LOGIN_START' })
-
     try {
-      const response = await apiService.register(userData)
-
-      console.log('Ответ register:', response) // ДОБАВИМ ОТЛАДКУ
-
-      localStorage.setItem('user_profile', JSON.stringify(response.user))
-
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: {
-          user: response.user,
-          token: response.token,
-        },
-      })
-
-      trackEvent('user_register', {
-        user_id: response.user.id,
-        registration_method: 'email'
-      })
-
-      return response
+      const newUser = await supabaseAuthService.register(userData)
+      setUser(newUser)
+      return newUser
     } catch (error) {
-      dispatch({
-        type: 'LOGIN_FAILURE',
-        payload: error.message,
-      })
       throw error
     }
   }
 
-  const logout = async () => {
-    await apiService.logout()
-    clearAuthData()
-    trackEvent('user_logout')
+  const login = async (email, password) => {
+    try {
+      const loggedUser = await supabaseAuthService.login(email, password)
+      setUser(loggedUser)
+      return loggedUser
+    } catch (error) {
+      throw error
+    }
   }
 
-  const updateProfile = async (profileData) => {
+  const logout = () => {
+    supabaseAuthService.logout()
+    setUser(null)
+  }
+
+  const updateUserPlan = async (planId, billingPeriod) => {
+    if (!user) return
+
     try {
-      const updatedUser = await apiService.updateProfile(profileData)
-      localStorage.setItem('user_profile', JSON.stringify(updatedUser))
-      dispatch({ type: 'SET_USER', payload: updatedUser })
-      return updatedUser
+      await supabaseAuthService.updateUserPlan(user.id, planId, billingPeriod)
+      // Пользователь обновится автоматически в сервисе
+      setUser(supabaseAuthService.getCurrentUser())
     } catch (error) {
-      console.error('Profile update failed:', error)
+      console.error('Failed to update user plan:', error)
       throw error
+    }
+  }
+
+  const incrementCalculations = async () => {
+    if (!user) return
+
+    try {
+      const newCount = await supabaseAuthService.incrementCalculationsCount(user.id)
+      setUser({ ...user, calculationsCount: newCount })
+      return newCount
+    } catch (error) {
+      console.error('Failed to increment calculations:', error)
     }
   }
 
   const value = {
-    ...state,
-    login,
+    user,
+    loading,
     register,
+    login,
     logout,
-    updateProfile,
+    updateUserPlan,
+    incrementCalculations,
+    isAuthenticated: !!user
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within AuthProvider')
   }
   return context
 }
