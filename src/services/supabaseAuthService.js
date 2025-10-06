@@ -7,13 +7,23 @@ class SupabaseAuthService {
     this.sessionKey = 'metricspace_session'
   }
 
+  // Нормализация email (убираем пробелы и приводим к нижнему регистру)
+  normalizeEmail(email) {
+    return email.trim().toLowerCase()
+  }
+
   // Регистрация пользователя
   async register(userData) {
     const { name, email, password } = userData
 
     try {
+      // Нормализуем email
+      const normalizedEmail = this.normalizeEmail(email)
+
+      console.log('Регистрация пользователя:', normalizedEmail)
+
       // Проверяем, не существует ли уже такой email
-      const existingUser = await this.findUserByEmail(email)
+      const existingUser = await this.findUserByEmail(normalizedEmail)
       if (existingUser) {
         throw new Error('Пользователь с таким email уже существует')
       }
@@ -24,7 +34,7 @@ class SupabaseAuthService {
       // Создаем пользователя в Supabase
       const newUser = await supabaseApi.insert('user_profiles', {
         name,
-        email,
+        email: normalizedEmail, // Сохраняем нормализованный email
         password_hash: passwordHash,
         plan: 'free',
         calculations_count: 0,
@@ -60,15 +70,19 @@ class SupabaseAuthService {
   // Авторизация пользователя
   async login(email, password) {
     try {
-      console.log('Попытка входа:', email)
+      // Нормализуем email для поиска
+      const normalizedEmail = this.normalizeEmail(email)
+
+      console.log('Попытка входа:', normalizedEmail)
 
       // Ищем пользователя по email
-      const userRecord = await this.findUserByEmail(email)
+      const userRecord = await this.findUserByEmail(normalizedEmail)
       if (!userRecord) {
+        console.error('Пользователь не найден в базе данных:', normalizedEmail)
         throw new Error('Пользователь не найден')
       }
 
-      console.log('Найден пользователь:', userRecord.name)
+      console.log('Найден пользователь:', userRecord.name, 'ID:', userRecord.id)
 
       // Проверяем пароль
       const isPasswordValid = await this.verifyPassword(
@@ -77,8 +91,11 @@ class SupabaseAuthService {
       )
 
       if (!isPasswordValid) {
+        console.error('Неверный пароль для пользователя:', normalizedEmail)
         throw new Error('Неверный пароль')
       }
+
+      console.log('Пароль верен, авторизуем пользователя')
 
       // Обновляем дату последнего входа
       await supabaseApi.update('user_profiles', userRecord.id, {
@@ -103,6 +120,7 @@ class SupabaseAuthService {
         plan: user.plan
       })
 
+      console.log('Авторизация успешна:', user)
       return user
     } catch (error) {
       console.error('Login error:', error)
@@ -110,17 +128,34 @@ class SupabaseAuthService {
     }
   }
 
-  // Поиск пользователя по email
+  // ИСПРАВЛЕННЫЙ поиск пользователя по email
   async findUserByEmail(email) {
     try {
-      const user = await supabaseApi.select('user_profiles', {
+      const normalizedEmail = this.normalizeEmail(email)
+
+      console.log('Поиск пользователя по email:', normalizedEmail)
+
+      // Делаем запрос без single:true, чтобы получить массив
+      const users = await supabaseApi.select('user_profiles', {
         select: '*',
-        eq: ['email', email],
-        single: true
+        eq: ['email', normalizedEmail]
       })
+
+      console.log('Результат поиска пользователя:', users)
+
+      // Если массив пустой - пользователь не найден
+      if (!users || users.length === 0) {
+        console.log('Пользователь не найден:', normalizedEmail)
+        return null
+      }
+
+      // Возвращаем первого найденного пользователя
+      const user = users[0]
+      console.log('Пользователь найден:', user.name, user.email)
       return user
+
     } catch (error) {
-      console.log('User not found:', email)
+      console.error('Ошибка поиска пользователя:', error)
       return null
     }
   }
@@ -178,7 +213,9 @@ class SupabaseAuthService {
   // Проверка пароля
   async verifyPassword(password, hash) {
     const computedHash = await this.hashPassword(password)
-    return computedHash === hash
+    const isValid = computedHash === hash
+    console.log('Проверка пароля:', isValid ? 'успешно' : 'неудачно')
+    return isValid
   }
 
   // Сохранение сессии
@@ -189,6 +226,7 @@ class SupabaseAuthService {
       expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 часа
     }
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionData))
+    console.log('Сессия сохранена:', user.email)
   }
 
   // Загрузка сессии
@@ -201,11 +239,13 @@ class SupabaseAuthService {
 
       // Проверяем, не истекла ли сессия
       if (Date.now() > session.expiresAt) {
+        console.log('Сессия истекла')
         this.logout()
         return null
       }
 
       this.currentUser = session.user
+      console.log('Сессия загружена:', session.user.email)
       return session.user
     } catch (error) {
       console.error('Session load error:', error)
@@ -216,6 +256,7 @@ class SupabaseAuthService {
 
   // Выход
   logout() {
+    console.log('Выход из системы')
     this.currentUser = null
     localStorage.removeItem(this.sessionKey)
   }
@@ -228,6 +269,38 @@ class SupabaseAuthService {
   // Проверка авторизации
   isAuthenticated() {
     return this.getCurrentUser() !== null
+  }
+
+  // ДОПОЛНИТЕЛЬНЫЙ метод для отладки
+  async debugUserSearch(email) {
+    try {
+      console.log('=== ОТЛАДКА ПОИСКА ПОЛЬЗОВАТЕЛЯ ===')
+      console.log('Исходный email:', email)
+
+      const normalizedEmail = this.normalizeEmail(email)
+      console.log('Нормализованный email:', normalizedEmail)
+
+      // Попробуем найти всех пользователей
+      const allUsers = await supabaseApi.select('user_profiles', {
+        select: 'id,email,name'
+      })
+
+      console.log('Все пользователи в базе:', allUsers)
+
+      // Попробуем найти конкретного пользователя
+      const specificUser = await supabaseApi.select('user_profiles', {
+        select: '*',
+        eq: ['email', normalizedEmail]
+      })
+
+      console.log('Поиск конкретного пользователя:', specificUser)
+      console.log('=== КОНЕЦ ОТЛАДКИ ===')
+
+      return specificUser
+    } catch (error) {
+      console.error('Ошибка отладки:', error)
+      return null
+    }
   }
 }
 
