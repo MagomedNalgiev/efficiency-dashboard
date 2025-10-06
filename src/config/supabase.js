@@ -1,6 +1,6 @@
 // Конфигурация для работы с Supabase через REST API
 export const SUPABASE_CONFIG = {
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://dthvqbcccujkjazonmos.supabase.co',
+  url: import.meta.env.VITE_SUPABASE_URL || 'https://dthvqbccujkjazconmos.supabase.co',
   anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZxYmNjdWpramF6Y29ubW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQxNzcsImV4cCI6MjA3NTM1MDE3N30.Xj9P_FOlIn_b0P2IOWnaSPOZqplHWjAA5xwnzJXi3i4',
 
   // API endpoints
