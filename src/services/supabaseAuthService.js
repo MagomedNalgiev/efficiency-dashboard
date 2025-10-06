@@ -7,8 +7,13 @@ class SupabaseAuthService {
     this.sessionKey = 'metricspace_session'
   }
 
-  // Нормализация email (убираем пробелы и приводим к нижнему регистру)
+  // ИСПРАВЛЕННАЯ нормализация email
   normalizeEmail(email) {
+    // Проверяем, что email действительно строка
+    if (!email || typeof email !== 'string') {
+      console.error('normalizeEmail: получен не-строковый email:', email, typeof email)
+      return ''
+    }
     return email.trim().toLowerCase()
   }
 
@@ -17,8 +22,17 @@ class SupabaseAuthService {
     const { name, email, password } = userData
 
     try {
+      // Проверяем входные данные
+      if (!name || !email || !password) {
+        throw new Error('Все поля обязательны для заполнения')
+      }
+
       // Нормализуем email
       const normalizedEmail = this.normalizeEmail(email)
+
+      if (!normalizedEmail) {
+        throw new Error('Некорректный email адрес')
+      }
 
       console.log('Регистрация пользователя:', normalizedEmail)
 
@@ -33,8 +47,8 @@ class SupabaseAuthService {
 
       // Создаем пользователя в Supabase
       const newUser = await supabaseApi.insert('user_profiles', {
-        name,
-        email: normalizedEmail, // Сохраняем нормализованный email
+        name: String(name).trim(),
+        email: normalizedEmail,
         password_hash: passwordHash,
         plan: 'free',
         calculations_count: 0,
@@ -67,13 +81,29 @@ class SupabaseAuthService {
     }
   }
 
-  // Авторизация пользователя
+  // ИСПРАВЛЕННАЯ авторизация пользователя
   async login(email, password) {
     try {
-      // Нормализуем email для поиска
-      const normalizedEmail = this.normalizeEmail(email)
+      console.log('=== НАЧАЛО АВТОРИЗАЦИИ ===')
+      console.log('Тип email:', typeof email, 'Значение:', email)
+      console.log('Тип password:', typeof password)
 
-      console.log('Попытка входа:', normalizedEmail)
+      // Проверяем входные данные
+      if (!email || !password) {
+        throw new Error('Email и пароль обязательны')
+      }
+
+      // Приводим к строке и нормализуем email
+      const emailString = String(email)
+      const passwordString = String(password)
+
+      const normalizedEmail = this.normalizeEmail(emailString)
+
+      if (!normalizedEmail) {
+        throw new Error('Некорректный email адрес')
+      }
+
+      console.log('Нормализованный email для поиска:', normalizedEmail)
 
       // Ищем пользователя по email
       const userRecord = await this.findUserByEmail(normalizedEmail)
@@ -86,7 +116,7 @@ class SupabaseAuthService {
 
       // Проверяем пароль
       const isPasswordValid = await this.verifyPassword(
-        password,
+        passwordString,
         userRecord.password_hash
       )
 
@@ -98,9 +128,14 @@ class SupabaseAuthService {
       console.log('Пароль верен, авторизуем пользователя')
 
       // Обновляем дату последнего входа
-      await supabaseApi.update('user_profiles', userRecord.id, {
-        updated_at: new Date().toISOString()
-      })
+      try {
+        await supabaseApi.update('user_profiles', userRecord.id, {
+          updated_at: new Date().toISOString()
+        })
+      } catch (updateError) {
+        console.warn('Не удалось обновить время последнего входа:', updateError)
+        // Не прерываем авторизацию из-за этой ошибки
+      }
 
       const user = {
         id: userRecord.id,
@@ -120,9 +155,10 @@ class SupabaseAuthService {
         plan: user.plan
       })
 
-      console.log('Авторизация успешна:', user)
+      console.log('=== АВТОРИЗАЦИЯ УСПЕШНА ===')
       return user
     } catch (error) {
+      console.error('=== ОШИБКА АВТОРИЗАЦИИ ===')
       console.error('Login error:', error)
       throw error
     }
@@ -130,49 +166,59 @@ class SupabaseAuthService {
 
   // ИСПРАВЛЕННЫЙ поиск пользователя по email
   async findUserByEmail(email) {
-      try {
-        const normalizedEmail = this.normalizeEmail(email)
+    try {
+      console.log('=== ПОИСК ПОЛЬЗОВАТЕЛЯ ===')
 
-        console.log('=== ПОИСК ПОЛЬЗОВАТЕЛЯ ===')
-        console.log('Нормализованный email:', normalizedEmail)
+      // Проверяем и нормализуем email
+      const emailString = String(email || '')
+      const normalizedEmail = this.normalizeEmail(emailString)
 
-        const url = `${SUPABASE_CONFIG.url}${SUPABASE_CONFIG.endpoints.rest}/user_profiles?email=eq.${encodeURIComponent(normalizedEmail)}&select=*`
-
-        console.log('URL запроса:', url)
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-            'Accept': 'application/json'
-          }
-        })
-
-        console.log('Статус ответа:', response.status)
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('Ошибка запроса:', errorText)
-          return null
-        }
-
-        const data = await response.json()
-        console.log('Данные ответа:', data)
-
-        if (!data || data.length === 0) {
-          console.log('Пользователь не найден')
-          return null
-        }
-
-        console.log('Пользователь найден:', data[0])
-        return data[0]
-
-      } catch (error) {
-        console.error('Исключение при поиске:', error)
+      if (!normalizedEmail) {
+        console.error('Пустой или некорректный email для поиска')
         return null
       }
+
+      console.log('Поиск пользователя по email:', normalizedEmail)
+
+      // Прямой запрос к API
+      const url = `https://dthvqbccujkjazconmos.supabase.co/rest/v1/user_profiles?email=eq.${encodeURIComponent(normalizedEmail)}&select=*`
+
+      console.log('URL запроса:', url)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZxYmNjdWpramF6Y29ubW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQxNzcsImV4cCI6MjA3NTM1MDE3N30.Xj9P_FOlIn_b0P2IOWnaSPOZqplHWjAA5xwnzJXi3i4',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZxYmNjdWpramF6Y29ubW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQxNzcsImV4cCI6MjA3NTM1MDE3N30.Xj9P_FOlIn_b0P2IOWnaSPOZqplHWjAA5xwnzJXi3i4',
+          'Accept': 'application/json'
+        }
+      })
+
+      console.log('Статус ответа:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Ошибка запроса:', response.status, errorText)
+        return null
+      }
+
+      const data = await response.json()
+      console.log('Результат поиска:', data)
+
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.log('Пользователь не найден в базе')
+        return null
+      }
+
+      const user = data[0]
+      console.log('Пользователь найден:', user.name, user.email)
+      return user
+
+    } catch (error) {
+      console.error('Исключение при поиске пользователя:', error)
+      return null
     }
+  }
 
   // Обновление плана пользователя (после оплаты)
   async updateUserPlan(userId, planId, billingPeriod) {
@@ -217,8 +263,9 @@ class SupabaseAuthService {
 
   // Хеширование пароля
   async hashPassword(password) {
+    const passwordString = String(password)
     const encoder = new TextEncoder()
-    const data = encoder.encode(password + 'metricspace_salt_2025_supabase')
+    const data = encoder.encode(passwordString + 'metricspace_salt_2025_supabase')
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
@@ -251,71 +298,4 @@ class SupabaseAuthService {
     try {
       const session = JSON.parse(sessionData)
 
-      // Проверяем, не истекла ли сессия
-      if (Date.now() > session.expiresAt) {
-        console.log('Сессия истекла')
-        this.logout()
-        return null
-      }
-
-      this.currentUser = session.user
-      console.log('Сессия загружена:', session.user.email)
-      return session.user
-    } catch (error) {
-      console.error('Session load error:', error)
-      this.logout()
-      return null
-    }
-  }
-
-  // Выход
-  logout() {
-    console.log('Выход из системы')
-    this.currentUser = null
-    localStorage.removeItem(this.sessionKey)
-  }
-
-  // Получение текущего пользователя
-  getCurrentUser() {
-    return this.currentUser || this.loadSession()
-  }
-
-  // Проверка авторизации
-  isAuthenticated() {
-    return this.getCurrentUser() !== null
-  }
-
-  // ДОПОЛНИТЕЛЬНЫЙ метод для отладки
-  async debugUserSearch(email) {
-    try {
-      console.log('=== ОТЛАДКА ПОИСКА ПОЛЬЗОВАТЕЛЯ ===')
-      console.log('Исходный email:', email)
-
-      const normalizedEmail = this.normalizeEmail(email)
-      console.log('Нормализованный email:', normalizedEmail)
-
-      // Попробуем найти всех пользователей
-      const allUsers = await supabaseApi.select('user_profiles', {
-        select: 'id,email,name'
-      })
-
-      console.log('Все пользователи в базе:', allUsers)
-
-      // Попробуем найти конкретного пользователя
-      const specificUser = await supabaseApi.select('user_profiles', {
-        select: '*',
-        eq: ['email', normalizedEmail]
-      })
-
-      console.log('Поиск конкретного пользователя:', specificUser)
-      console.log('=== КОНЕЦ ОТЛАДКИ ===')
-
-      return specificUser
-    } catch (error) {
-      console.error('Ошибка отладки:', error)
-      return null
-    }
-  }
-}
-
-export const supabaseAuthService = new SupabaseAuthService()
+      // Проверяем,
