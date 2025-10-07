@@ -2,6 +2,7 @@
   command   = "npm config set optional=false && npm install && npm run build"
   publish   = "dist"
 
+
 [build.environment]
   NODE_VERSION = "18"
 
