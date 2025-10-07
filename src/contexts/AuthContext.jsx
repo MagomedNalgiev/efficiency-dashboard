@@ -24,12 +24,38 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const login = async (email, password) => {
+  // ИСПРАВЛЕННЫЙ login - поддерживает оба формата вызова
+  const login = async (emailOrFormData, password) => {
     try {
-      const loggedUser = await supabaseAuthService.login(email, password)
+      let email, pwd
+
+      // Проверяем, передан ли объект formData или отдельные параметры
+      if (typeof emailOrFormData === 'object' && emailOrFormData !== null) {
+        // Случай: login(formData)
+        email = emailOrFormData.email
+        pwd = emailOrFormData.password
+
+        console.log('Login вызван с объектом formData:', { email, hasPassword: !!pwd })
+      } else {
+        // Случай: login(email, password)
+        email = emailOrFormData
+        pwd = password
+
+        console.log('Login вызван с отдельными параметрами:', { email, hasPassword: !!pwd })
+      }
+
+      // Проверяем, что у нас есть email и пароль
+      if (!email || !pwd) {
+        throw new Error('Email и пароль обязательны')
+      }
+
+      console.log('Вызываем supabaseAuthService.login с:', email)
+
+      const loggedUser = await supabaseAuthService.login(email, pwd)
       setUser(loggedUser)
       return loggedUser
     } catch (error) {
+      console.error('AuthContext login error:', error)
       throw error
     }
   }
