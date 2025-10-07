@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev:server": "nodemon server.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
@@ -45,7 +45,5 @@
   },
   "engines": {
     "node": ">=18.17.0"
-  },
-
-
+  }
 }
