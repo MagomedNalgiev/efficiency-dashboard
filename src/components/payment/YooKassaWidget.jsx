@@ -1,91 +1,135 @@
-import { useEffect, useState } from 'react'
-import { paymentService } from '../../services/paymentService'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
+import { initYooKassaPayment } from '../../config/payment'
+import { trackEvent } from '../../utils/analytics'
 
-export default function YooKassaWidget({
-  planId,
-  billingPeriod,
-  userEmail,
-  userId,
-  onSuccess,
-  onError,
-  onClose
-}) {
-  const [loading, setLoading] = useState(true)
+export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
+  const { user } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [widgetInstance, setWidgetInstance] = useState(null)
 
   useEffect(() => {
-    initializePayment()
-  }, [planId, billingPeriod, userEmail, userId])
+    // Загружаем YooKassa SDK
+    const loadYooKassaSDK = () => {
+      if (window.YooMoneyCheckoutWidget) {
+        initializePayment()
+        return
+      }
 
-  const initializePayment = async () => {
-    try {
-      setLoading(true)
+      const script = document.createElement('script')
+      script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js'
+      script.onload = () => {
+        initializePayment()
+      }
+      script.onerror = () => {
+        setError('Ошибка загрузки YooKassa SDK')
+        setIsLoading(false)
+      }
+      document.head.appendChild(script)
+    }
+
+    const initializePayment = async () => {
+      if (!user || !user.email) {
+        setError('Необходимо авторизоваться для оплаты')
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
       setError(null)
 
-      // Инициируем платеж
-      await paymentService.initiatePurchase(planId, billingPeriod, userEmail, userId)
+      try {
+        const widget = await initYooKassaPayment(
+          planId,
+          billingPeriod,
+          user.email,
+          (paymentData) => {
+            console.log('Платеж инициализирован:', paymentData)
+            trackEvent('payment_initiated', {
+              plan_id: planId,
+              billing_period: billingPeriod,
+              user_id: user.id,
+              payment_id: paymentData.payment_id
+            })
+          },
+          (error) => {
+            console.error('Ошибка платежа:', error)
+            setError(error)
+            setIsLoading(false)
+            trackEvent('payment_error', {
+              plan_id: planId,
+              billing_period: billingPeriod,
+              user_id: user.id,
+              error: error
+            })
+            if (onError) onError(error)
+          }
+        )
 
-      // Платеж инициирован успешно (или произошел редирект)
-      setLoading(false)
+        setWidgetInstance(widget)
+        setIsLoading(false)
 
-    } catch (error) {
-      console.error('Payment initialization error:', error)
-      setError(error.message)
-      setLoading(false)
-      onError(error.message)
+      } catch (error) {
+        console.error('Ошибка инициализации виджета:', error)
+        setError(error.message)
+        setIsLoading(false)
+        if (onError) onError(error.message)
+      }
     }
-  }
 
-  if (error) {
-    return (
-      <div className="text-center p-6">
-        <div className="text-red-400 text-6xl mb-4">❌</div>
-        <h3 className="text-xl font-semibold text-white mb-3">Ошибка инициализации платежа</h3>
-        <p className="text-red-300 mb-6">{error}</p>
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={initializePayment}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Попробовать снова
-          </button>
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Закрыть
-          </button>
-        </div>
-      </div>
-    )
-  }
+    loadYooKassaSDK()
 
-  if (loading) {
-    return (
-      <div className="text-center p-6">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <h3 className="text-lg font-semibold text-white mb-2">Подготовка к оплате...</h3>
-        <p className="text-white/70">Инициализация платежной системы</p>
+    // Cleanup
+    return () => {
+      if (widgetInstance && widgetInstance.destroy) {
+        widgetInstance.destroy()
+      }
+    }
+  }, [planId, billingPeriod, user])
 
-        {/* В demo режиме показываем прогресс */}
-        <div className="mt-6 bg-white/10 rounded-lg p-4">
-          <p className="text-white/80 text-sm mb-2">🧪 Демо режим активен</p>
-          <p className="text-white/60 text-xs">
-            Перенаправление на страницу успеха через несколько секунд...
-          </p>
-        </div>
-      </div>
-    )
+  const handleClose = () => {
+    if (widgetInstance && widgetInstance.destroy) {
+      widgetInstance.destroy()
+    }
+    if (onClose) onClose()
   }
 
   return (
-    <div className="text-center p-6">
-      {/* Контейнер для виджета ЮKassa (для реального режима) */}
-      <div id="yookassa-payment"></div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Оплата подписки</h3>
+          <button
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
 
-      <p className="text-white/70 text-sm mt-4">
-        Используется безопасная система оплаты ЮKassa
-      </p>
+        {isLoading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-gray-600">Загрузка платежной формы...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong>Ошибка: </strong>
+            {error}
+          </div>
+        )}
+
+        {/* Контейнер для виджета YooKassa */}
+        <div id="yookassa-payment-form" className="min-h-[400px]"></div>
+
+        <div className="mt-4 text-sm text-gray-500 text-center">
+          <p>Безопасная оплата через YooKassa</p>
+          <p>Принимаем карты, SberPay, YooMoney</p>
+        </div>
+      </div>
     </div>
   )
 }

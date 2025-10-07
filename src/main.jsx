@@ -15,6 +15,8 @@ import PricingPage from './components/PricingPage.jsx'
 import Layout from './components/Layout';
 import App from './App.jsx';
 import BlogPage from './components/BlogPage.jsx'
+import PaymentSuccessPage from './components/payment/PaymentSuccessPage'
+
 
 // Калькуляторы (все как раньше)
 import CalculatorVelocity from './components/CalculatorVelocity.jsx';
@@ -63,6 +65,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             {/* Отдельные страницы */}
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
           </Routes>
         </BrowserRouter>
       </SubscriptionProvider>

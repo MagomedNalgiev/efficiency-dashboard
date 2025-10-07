@@ -1,23 +1,30 @@
-// Конфигурация платежной системы ЮKassa через CDN
+// Конфигурация платежной системы YooKassa
 export const PAYMENT_CONFIG = {
-  // Тестовые данные (замените на реальные после регистрации в ЮKassa)
-  shopId: import.meta.env.VITE_YUKASSA_SHOP_ID || '123456', // ИСПРАВЛЕНО: import.meta.env вместо process.env
+  // Данные из личного кабинета YooKassa
+  shopId: import.meta.env.VITE_YUKASSA_SHOP_ID || '1178919',
+  testShopId: import.meta.env.VITE_YUKASSA_TEST_SHOP_ID || '1181171',
 
-  // Настройки для demo режима
-  demoMode: true, // Включить для тестирования без реальных платежей
+  // Режим работы (test/production)
+  mode: import.meta.env.VITE_PAYMENT_MODE || 'test',
+
+  // API для создания платежей
+  paymentApiUrl: import.meta.env.VITE_PAYMENT_API_URL || 'http://metricspace.ru/api',
 
   // URL для возврата после оплаты
   returnUrl: window.location.origin + '/payment/success',
 
-  // Конфигурация планов (синхронизируем с subscriptionPlans.js)
+  // URL для уведомлений (webhook)
+  webhookUrl: import.meta.env.VITE_PAYMENT_API_URL + '/webhook/yookassa',
+
+  // Конфигурация планов
   plans: {
     PRO: {
       monthly: {
-        amount: 990.00, // ЮKassa требует decimal
+        amount: 990.00,
         description: 'Metricspace Pro - месячная подписка'
       },
       yearly: {
-        amount: 9900.00, // ЮKassa требует decimal
+        amount: 9900.00,
         description: 'Metricspace Pro - годовая подписка (скидка 17%)'
       }
     },
@@ -34,99 +41,90 @@ export const PAYMENT_CONFIG = {
   }
 }
 
-// Функция для инициализации виджета ЮKassa
-export const initYooKassaPayment = (planId, billingPeriod, userEmail, onSuccess, onError) => {
+// Функция для создания платежа через ваш backend
+export const createPayment = async (planId, billingPeriod, userEmail) => {
   const plan = PAYMENT_CONFIG.plans[planId]
   if (!plan || !plan[billingPeriod]) {
-    onError('Неверный план или период оплаты')
-    return
-  }
-
-  // Проверяем, что YooCheckout доступен
-  if (!window.YooCheckout) {
-    onError('ЮKassa SDK не загружен')
-    return
+    throw new Error('Неверный план или период оплаты')
   }
 
   const paymentData = {
     amount: plan[billingPeriod].amount,
     currency: 'RUB',
     description: plan[billingPeriod].description,
-
-    // Данные получателя для чека
-    receipt: {
-      customer: {
-        email: userEmail
-      },
-      items: [{
-        description: plan[billingPeriod].description,
-        amount: plan[billingPeriod].amount,
-        vat_code: 1, // НДС не облагается
-        quantity: 1
-      }]
-    },
-
-    // Метаданные для отслеживания
-    metadata: {
-      user_email: userEmail,
-      plan_id: planId,
-      billing_period: billingPeriod,
-      source: 'metricspace_web'
-    },
-
-    // URL возврата
-    confirmation: {
-      type: 'redirect',
-      return_url: `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}`
-    }
+    planId,
+    billingPeriod,
+    userEmail,
+    returnUrl: `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}`,
+    mode: PAYMENT_CONFIG.mode
   }
 
-  // В demo режиме - симулируем успешный платеж
-  if (PAYMENT_CONFIG.demoMode) {
-    console.log('DEMO MODE: Симулируем успешный платеж', paymentData)
-
-    // Симулируем задержку платежной системы
-    setTimeout(() => {
-      // Сохраняем информацию о "платеже" для демо
-      localStorage.setItem('demo_payment', JSON.stringify({
-        paymentId: `demo_${Date.now()}`,
-        planId,
-        billingPeriod,
-        amount: plan[billingPeriod].amount,
-        timestamp: Date.now(),
-        status: 'succeeded'
-      }))
-
-      // Перенаправляем на страницу успеха
-      window.location.href = `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=demo_${Date.now()}&demo=true`
-    }, 2000)
-
-    return
-  }
-
-  // Реальный режим - используем ЮKassa виджет
   try {
-    const checkout = new window.YooCheckout({
-      shopId: PAYMENT_CONFIG.shopId,
-      amount: paymentData.amount,
-      currency: paymentData.currency,
-      description: paymentData.description,
-      receipt: paymentData.receipt,
-      metadata: paymentData.metadata,
-      confirmation: paymentData.confirmation
+    const response = await fetch(`${PAYMENT_CONFIG.paymentApiUrl}/payments/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData)
     })
 
-    checkout.render('yookassa-payment')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-    checkout.on('success', (payment) => {
-      onSuccess(payment)
+    return await response.json()
+  } catch (error) {
+    console.error('Payment creation failed:', error)
+    throw error
+  }
+}
+
+// Функция для инициализации виджета YooKassa
+export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
+  try {
+    // Проверяем, что YooCheckout доступен
+    if (!window.YooMoneyCheckoutWidget) {
+      throw new Error('YooKassa SDK не загружен')
+    }
+
+    console.log('Создаем платеж через backend...')
+
+    // Создаем платеж через ваш backend
+    const paymentResponse = await createPayment(planId, billingPeriod, userEmail)
+
+    if (!paymentResponse.confirmation_token) {
+      throw new Error('Не получен confirmation_token от сервера')
+    }
+
+    console.log('Платеж создан, инициализируем виджет...')
+
+    // Инициализируем виджет
+    const checkout = new window.YooMoneyCheckoutWidget({
+      confirmation_token: paymentResponse.confirmation_token,
+      return_url: `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.payment_id}`,
+      error_callback: function(error) {
+        console.error('YooKassa widget error:', error)
+        onError(error.message || 'Ошибка при создании платежа')
+      }
     })
 
-    checkout.on('error', (error) => {
-      onError(error.message || 'Ошибка при создании платежа')
-    })
+    // Отображаем виджет
+    checkout.render('yookassa-payment-form')
+      .then(() => {
+        console.log('Виджет YooKassa загружен успешно')
+        if (onSuccess) {
+          onSuccess(paymentResponse)
+        }
+      })
+      .catch((error) => {
+        console.error('Ошибка отображения виджета:', error)
+        onError('Ошибка отображения платежной формы')
+      })
+
+    return checkout
 
   } catch (error) {
-    onError('Ошибка инициализации платежа: ' + error.message)
+    console.error('Ошибка инициализации платежа:', error)
+    onError(error.message || 'Ошибка при создании платежа')
   }
 }

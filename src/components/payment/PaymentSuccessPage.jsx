@@ -1,215 +1,221 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { useSubscription } from '../../contexts/SubscriptionContext'
-import { paymentService } from '../../services/paymentService'
-import { SUBSCRIPTION_PLANS } from '../../config/subscriptionPlans'
+import { supabaseAuthService } from '../../services/supabaseAuthService'
 import { trackEvent } from '../../utils/analytics'
 
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams()
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const { user, updateUserPlan } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState(null)
-  const [paymentDetails, setPaymentDetails] = useState(null)
-  const { user } = useAuth()
-  const { loadSubscriptionInfo } = useSubscription()
-
-  const planId = searchParams.get('plan')
-  const billingPeriod = searchParams.get('period')
-  const paymentId = searchParams.get('payment_id')
+  const [paymentInfo, setPaymentInfo] = useState(null)
 
   useEffect(() => {
-    processPaymentSuccess()
-  }, [])
+    const handlePaymentResult = async () => {
+      try {
+        const planId = searchParams.get('plan')
+        const billingPeriod = searchParams.get('period')
+        const paymentId = searchParams.get('payment_id')
+        const isDemo = searchParams.get('demo') === 'true'
 
-  const processPaymentSuccess = async () => {
-    try {
-      // Попытаемся восстановить информацию о платеже
-      let pendingPayment = paymentService.restorePendingPayment()
-
-      if (!pendingPayment && (planId && billingPeriod)) {
-        // Создаем минимальную информацию из URL параметров
-        pendingPayment = {
-          planId: planId.toUpperCase(),
-          billingPeriod,
-          paymentId: paymentId || `success_${Date.now()}`
+        if (!planId || !billingPeriod) {
+          throw new Error('Недостающие параметры платежа')
         }
+
+        if (isDemo) {
+          // Демо режим - просто обновляем план
+          console.log('Демо платеж - обновляем план пользователя')
+          await handleSuccessfulPayment(planId, billingPeriod, paymentId)
+          return
+        }
+
+        if (!paymentId) {
+          throw new Error('ID платежа не найден')
+        }
+
+        // Проверяем статус платежа через backend
+        console.log('Проверяем статус платежа:', paymentId)
+        const paymentStatus = await checkPaymentStatus(paymentId)
+
+        if (paymentStatus.status === 'succeeded') {
+          await handleSuccessfulPayment(planId, billingPeriod, paymentId)
+        } else {
+          throw new Error(`Платеж не завершен. Статус: ${paymentStatus.status}`)
+        }
+
+      } catch (error) {
+        console.error('Ошибка обработки результата платежа:', error)
+        setError(error.message)
+        setIsLoading(false)
       }
+    }
 
-      if (!pendingPayment) {
-        throw new Error('Не удалось найти информацию о платеже')
+    handlePaymentResult()
+  }, [searchParams, user, updateUserPlan])
+
+  const checkPaymentStatus = async (paymentId) => {
+    try {
+      const response = await fetch(`/api/payments/status/${paymentId}`)
+      if (!response.ok) {
+        throw new Error('Ошибка проверки статуса платежа')
       }
-
-      // Обрабатываем успешный платеж
-      await paymentService.handlePaymentSuccess(
-        pendingPayment.paymentId,
-        pendingPayment.planId,
-        pendingPayment.billingPeriod,
-        user?.id
-      )
-
-      // Обновляем информацию о подписке
-      await loadSubscriptionInfo()
-
-      // Получаем информацию о плане для отображения
-      const plan = SUBSCRIPTION_PLANS[pendingPayment.planId]
-      const price = pendingPayment.billingPeriod === 'yearly'
-        ? plan.priceYearly
-        : plan.priceMonthly
-
-      setPaymentDetails({
-        planName: plan.name,
-        planId: pendingPayment.planId,
-        billingPeriod: pendingPayment.billingPeriod,
-        price,
-        features: plan.features
-      })
-
-      trackEvent('payment_success_page_viewed', {
-        plan_id: pendingPayment.planId,
-        billing_period: pendingPayment.billingPeriod
-      })
-
+      return await response.json()
     } catch (error) {
-      console.error('Payment processing error:', error)
-      setError(error.message)
-
-      trackEvent('payment_success_page_error', {
-        error: error.message,
-        plan_id: planId,
-        billing_period: billingPeriod
-      })
-    } finally {
-      setLoading(false)
+      console.error('Ошибка проверки статуса:', error)
+      throw error
     }
   }
 
-  if (loading) {
+  const handleSuccessfulPayment = async (planId, billingPeriod, paymentId) => {
+    try {
+      if (!user) {
+        throw new Error('Пользователь не авторизован')
+      }
+
+      console.log('Обновляем план пользователя:', { planId, billingPeriod })
+
+      // Обновляем план пользователя в базе данных
+      await supabaseAuthService.updateUserPlan(user.id, planId, billingPeriod)
+
+      // Обновляем состояние пользователя в контексте
+      await updateUserPlan(planId, billingPeriod)
+
+      setPaymentInfo({
+        planId: planId.toUpperCase(),
+        billingPeriod,
+        paymentId
+      })
+
+      setIsSuccess(true)
+
+      // Аналитика
+      trackEvent('payment_success', {
+        plan_id: planId,
+        billing_period: billingPeriod,
+        user_id: user.id,
+        payment_id: paymentId
+      })
+
+      console.log('План успешно обновлен')
+
+    } catch (error) {
+      console.error('Ошибка обновления плана:', error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getPlanName = (planId) => {
+    switch(planId) {
+      case 'PRO': return 'Профессиональный'
+      case 'ENTERPRISE': return 'Корпоративный'
+      default: return planId
+    }
+  }
+
+  const getBillingPeriodName = (period) => {
+    return period === 'yearly' ? 'Годовая' : 'Месячная'
+  }
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Обрабатываем ваш платеж...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Обрабатываем платеж...
+        </h2>
+        <p className="text-gray-600">Пожалуйста, подождите</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-red-500/10 border border-red-500/30 rounded-xl p-8 text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <h1 className="text-2xl font-bold text-white mb-4">Ошибка обработки платежа</h1>
-          <p className="text-red-300 mb-6">{error}</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Ошибка платежа
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-y-3">
-            <Link
-              to="/pricing"
-              className="block bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+            <button
+              onClick={() => navigate('/pricing')}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
             >
-              Попробовать снова
-            </Link>
-            <Link
-              to="/app"
-              className="block bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+              Попробовать еще раз
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
             >
-              Вернуться к приложению
-            </Link>
+              Вернуться в панель
+            </button>
           </div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white/10 backdrop-blur-sm rounded-xl p-8 text-center">
-        {/* Иконка успеха */}
-        <div className="text-8xl mb-6">🎉</div>
-
-        <h1 className="text-4xl font-bold text-white mb-4">
-          Оплата прошла успешно!
-        </h1>
-
-        <p className="text-xl text-white/80 mb-8">
-          Поздравляем! Вы активировали план <span className="text-green-400 font-bold">
-            {paymentDetails?.planName}
-          </span>
-        </p>
-
-        {/* Детали подписки */}
-        <div className="bg-white/5 rounded-lg p-6 mb-8 text-left">
-          <h3 className="text-xl font-semibold text-white mb-4">Детали вашей подписки:</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <span className="text-white/60">План:</span>
-              <p className="text-white font-semibold">{paymentDetails?.planName}</p>
-            </div>
-            <div>
-              <span className="text-white/60">Период оплаты:</span>
-              <p className="text-white font-semibold">
-                {paymentDetails?.billingPeriod === 'yearly' ? 'Годовой' : 'Месячный'}
-              </p>
-            </div>
-            <div>
-              <span className="text-white/60">Сумма:</span>
-              <p className="text-green-400 font-bold text-lg">{paymentDetails?.price}₽</p>
-            </div>
-            <div>
-              <span className="text-white/60">Следующий платеж:</span>
-              <p className="text-white font-semibold">
-                {new Date(Date.now() + (paymentDetails?.billingPeriod === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU')}
-              </p>
-            </div>
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Оплата прошла успешно!
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Ваша подписка успешно активирована
+          </p>
 
-          <div className="border-t border-white/20 pt-4">
-            <span className="text-white/60">Теперь вам доступно:</span>
-            <ul className="mt-2 space-y-2">
-              {paymentDetails?.features.map((feature, index) => (
-                <li key={index} className="flex items-center text-white/80">
-                  <span className="text-green-400 mr-2">✓</span>
-                  {feature}
-                </li>
-              ))}
-            </ul>
+          {paymentInfo && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+              <h3 className="font-semibold text-gray-900 mb-2">Детали подписки:</h3>
+              <p className="text-sm text-gray-600">
+                <strong>План:</strong> {getPlanName(paymentInfo.planId)}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>Период:</strong> {getBillingPeriodName(paymentInfo.billingPeriod)}
+              </p>
+              {paymentInfo.paymentId && (
+                <p className="text-sm text-gray-600">
+                  <strong>ID платежа:</strong> {paymentInfo.paymentId}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            >
+              Перейти к панели управления
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+            >
+              На главную
+            </button>
           </div>
-        </div>
-
-        {/* Следующие шаги */}
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-white mb-3">🚀 Что дальше?</h3>
-          <ul className="text-white/80 space-y-2 text-left">
-            <li>• Все калькуляторы теперь разблокированы</li>
-            <li>• Безлимитные расчеты</li>
-            <li>• Полная история данных</li>
-            <li>• Приоритетная поддержка</li>
-          </ul>
-        </div>
-
-        {/* Кнопки действий */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            to="/app"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            🎯 Начать использовать
-          </Link>
-
-          <Link
-            to="/app/data-manager"
-            className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 border border-white/30"
-          >
-            📊 Управление данными
-          </Link>
-        </div>
-
-        {/* Поддержка */}
-        <div className="mt-8 text-white/60 text-sm">
-          <p>Нужна помощь? Напишите нам: <a href="mailto:support@metricspace.ru" className="text-blue-400 hover:text-blue-300">support@metricspace.ru</a></p>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return null
 }
