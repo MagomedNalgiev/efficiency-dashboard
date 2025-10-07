@@ -15,7 +15,11 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
 
   if (!isOpen) return null
 
+  // ИСПРАВЛЕННАЯ функция handleUpgrade
   const handleUpgrade = async (planId) => {
+    // Конвертируем в правильный формат для payment.js (приводим к нижнему регистру)
+    const normalizedPlanId = planId.toLowerCase()
+
     if (!isAuthenticated) {
       setError('Сначала необходимо зарегистрироваться')
       return
@@ -27,11 +31,11 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
     }
 
     setError(null)
-    setSelectedPlan(planId)
+    setSelectedPlan(normalizedPlanId) // Используем нормализованный ID
     setShowPaymentWidget(true)
 
     trackEvent('payment_widget_opened', {
-      plan_id: planId,
+      plan_id: normalizedPlanId, // Используем нормализованный ID
       billing_period: billingPeriod,
       user_id: user.id
     })
@@ -41,10 +45,9 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
     trackEvent('payment_widget_completed', {
       plan_id: selectedPlan,
       billing_period: billingPeriod,
-      payment_id: payment.id,
+      payment_id: payment.payment_id, // ИСПРАВЛЕНО: payment_id вместо id
       user_id: user.id
     })
-
     // Закрываем модальное окно, пользователь будет перенаправлен
     onClose()
   }
@@ -52,7 +55,6 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
   const handlePaymentError = (error) => {
     setError(error)
     setShowPaymentWidget(false)
-
     trackEvent('payment_widget_error', {
       plan_id: selectedPlan,
       billing_period: billingPeriod,
@@ -69,19 +71,19 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
   // Если показываем виджет оплаты
   if (showPaymentWidget) {
     return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl max-w-md w-full">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
           {/* Заголовок */}
-          <div className="p-6 border-b border-white/20 flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-white">Оплата</h2>
-              <p className="text-white/70 text-sm mt-1">
-                {SUBSCRIPTION_PLANS[selectedPlan]?.name} - {billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'} подписка
+              <h3 className="text-lg font-semibold text-gray-900">Оплата</h3>
+              <p className="text-sm text-gray-600">
+                {SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()]?.name} - {billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'} подписка
               </p>
             </div>
             <button
               onClick={handleClosePaymentWidget}
-              className="text-white/70 hover:text-white text-2xl"
+              className="text-gray-500 hover:text-gray-700"
             >
               ✕
             </button>
@@ -105,17 +107,17 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
   const plans = [SUBSCRIPTION_PLANS.FREE, SUBSCRIPTION_PLANS.PRO, SUBSCRIPTION_PLANS.ENTERPRISE]
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Заголовок */}
-        <div className="p-6 border-b border-white/20 flex justify-between items-center">
+        <div className="flex justify-between items-center p-6 border-b">
           <div>
-            <h2 className="text-3xl font-bold text-white">Выберите план</h2>
-            <p className="text-white/70 mt-2">Получите полный доступ ко всем возможностям</p>
+            <h2 className="text-2xl font-bold text-gray-900">Выберите план</h2>
+            <p className="text-gray-600">Получите полный доступ ко всем возможностям</p>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white text-2xl"
+            className="text-gray-500 hover:text-gray-700"
           >
             ✕
           </button>
@@ -123,45 +125,43 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
 
         {/* Ошибка */}
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
-            <p className="text-red-300">{error}</p>
+          <div className="mx-6 mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
           </div>
         )}
 
         {/* Переключатель периода оплаты */}
-        <div className="p-6 border-b border-white/20">
-          <div className="flex justify-center">
-            <div className="bg-white/10 rounded-lg p-1 flex">
+        <div className="p-6 pb-4">
+          <div className="flex items-center justify-center mb-6">
+            <div className="bg-gray-100 p-1 rounded-lg flex">
               <button
                 onClick={() => setBillingPeriod('monthly')}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingPeriod === 'monthly'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-white/70 hover:text-white'
+                    ? 'bg-white text-gray-900 shadow'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Ежемесячно
               </button>
               <button
                 onClick={() => setBillingPeriod('yearly')}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors relative ${
                   billingPeriod === 'yearly'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-white/70 hover:text-white'
+                    ? 'bg-white text-gray-900 shadow'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Ежегодно
-                <span className="ml-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">
                   -17%
                 </span>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Планы */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Планы */}
+          <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const price = billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly
               const isCurrentPlan = currentPlan === plan.id.toUpperCase()
@@ -170,85 +170,81 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
               return (
                 <div
                   key={plan.id}
-                  className={`relative bg-white/5 rounded-xl p-6 border-2 transition-all ${
+                  className={`relative bg-white rounded-xl p-6 border-2 transition-all ${
                     plan.recommended
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-white/20 hover:border-white/40'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   {/* Рекомендуемый значок */}
                   {plan.recommended && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full">
+                      <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
                         Рекомендуем
-                      </span>
+                      </div>
                     </div>
                   )}
 
                   {/* Название плана */}
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                    <p className="text-white/70 text-sm mb-4">{plan.description}</p>
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                    <p className="text-gray-600 text-sm">{plan.description}</p>
+                  </div>
 
-                    {/* Цена */}
-                    <div className="mb-4">
-                      {isFree ? (
-                        <div className="text-3xl font-bold text-white">Бесплатно</div>
-                      ) : (
-                        <>
-                          <div className="text-3xl font-bold text-white">
-                            {billingPeriod === 'yearly'
-                              ? `${Math.round(price / 12)}₽`
-                              : `${price}₽`
-                            }
-                            <span className="text-lg font-normal text-white/70">/мес</span>
+                  {/* Цена */}
+                  <div className="text-center mb-6">
+                    {isFree ? (
+                      <div className="text-2xl font-bold text-gray-900">Бесплатно</div>
+                    ) : (
+                      <>
+                        <div className="text-3xl font-bold text-gray-900">
+                          {billingPeriod === 'yearly'
+                            ? `${Math.round(price / 12)}₽`
+                            : `${price}₽`
+                          }
+                          <span className="text-lg text-gray-500">/мес</span>
+                        </div>
+                        {billingPeriod === 'yearly' && (
+                          <div className="text-sm text-gray-500">
+                            {price}₽ в год (скидка 17%)
                           </div>
-                          {billingPeriod === 'yearly' && (
-                            <div className="text-white/60 text-sm">
-                              {price}₽ в год (скидка 17%)
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* Возможности */}
-                  <ul className="space-y-3 mb-6">
+                  <ul className="mb-6 space-y-2">
                     {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-green-400 mr-3 mt-1">✓</span>
-                        <span className="text-white/80 text-sm">{feature}</span>
+                      <li key={index} className="flex items-start text-sm">
+                        <span className="text-green-500 mr-2">✓</span>
+                        {feature}
                       </li>
                     ))}
                   </ul>
 
                   {/* Кнопка действия */}
-                  <div className="mt-auto">
+                  <div className="text-center">
                     {isCurrentPlan ? (
                       <button
                         disabled
-                        className="w-full bg-gray-600 text-gray-400 py-3 px-6 rounded-lg font-medium cursor-not-allowed"
+                        className="w-full bg-gray-200 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed"
                       >
                         Текущий план
                       </button>
                     ) : isFree ? (
                       <button
                         disabled
-                        className="w-full bg-gray-600 text-gray-400 py-3 px-6 rounded-lg font-medium cursor-not-allowed"
+                        className="w-full bg-gray-100 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed"
                       >
-                        Базовый план
+                        Бесплатно
                       </button>
                     ) : (
                       <button
                         onClick={() => handleUpgrade(plan.id)}
-                        className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                          plan.recommended
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/30'
-                        }`}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
                       >
-                        Оплатить {billingPeriod === 'yearly' ? `${price}₽/год` : `${price}₽/мес`}
+                        Выбрать план
                       </button>
                     )}
                   </div>
@@ -256,20 +252,18 @@ export default function PricingModal({ isOpen, onClose, defaultPlan = 'PRO' }) {
               )
             })}
           </div>
-        </div>
 
-        {/* Дополнительная информация */}
-        <div className="p-6 border-t border-white/20 bg-white/5">
-          <div className="text-center text-white/60 text-sm">
-            <p className="mb-2">
-              💳 Принимаем карты Visa, MasterCard, МИР • СБП
-            </p>
-            <p className="mb-2">
-              🔒 Безопасные платежи через ЮKassa
-            </p>
-            <p>
-              📞 Поддержка 24/7 • 💰 Возврат средств в течение 14 дней
-            </p>
+          {/* Дополнительная информация */}
+          <div className="mt-8 text-center space-y-2 text-sm text-gray-500">
+            <div>
+              <span className="mr-4">💳 Принимаем карты Visa, MasterCard, МИР • СБП</span>
+            </div>
+            <div>
+              <span className="mr-4">🔒 Безопасные платежи через ЮKassa</span>
+            </div>
+            <div>
+              <span className="mr-4">📞 Поддержка 24/7 • 💰 Возврат средств в течение 14 дней</span>
+            </div>
           </div>
         </div>
       </div>
