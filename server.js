@@ -186,3 +186,5 @@ app.listen(PORT, () => {
   console.log(`Payment backend запущен на порту ${PORT}`)
   console.log(`Режим: ${process.env.NODE_ENV || 'development'}`)
 })
+
+
