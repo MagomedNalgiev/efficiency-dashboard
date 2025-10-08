@@ -1,14 +1,9 @@
 // Конфигурация платежной системы YooKassa
 export const PAYMENT_CONFIG = {
-  // Тестовый режим для продакшн сайта
-  mode: 'mock', // ИЗМЕНЕНО: используем mock режим
-
-  // URL для возврата после оплаты
+  mode: 'mock',
   returnUrl: window.location.origin + '/payment/success',
-
-  // Конфигурация планов (ИСПРАВЛЕНО: строчные ID как в subscriptionPlans.js)
   plans: {
-    pro: {  // ИСПРАВЛЕНО: было PRO, стало pro
+    pro: {
       monthly: {
         amount: 990.00,
         description: 'Metricspace Pro - месячная подписка'
@@ -18,7 +13,7 @@ export const PAYMENT_CONFIG = {
         description: 'Metricspace Pro - годовая подписка (скидка 17%)'
       }
     },
-    enterprise: {  // ИСПРАВЛЕНО: было ENTERPRISE, стало enterprise
+    enterprise: {
       monthly: {
         amount: 4990.00,
         description: 'Metricspace Enterprise - месячная подписка'
@@ -31,14 +26,12 @@ export const PAYMENT_CONFIG = {
   }
 }
 
-// НОВАЯ функция для создания mock платежа
 export const createMockPayment = async (planId, billingPeriod, userEmail) => {
-  const plan = PAYMENT_CONFIG.plans[planId.toLowerCase()]  // ИСПРАВЛЕНО: приводим к нижнему регистру
+  const plan = PAYMENT_CONFIG.plans[planId.toLowerCase()]
   if (!plan || !plan[billingPeriod]) {
     throw new Error('Неверный план или период оплаты')
   }
 
-  // Симулируем запрос к серверу
   return new Promise((resolve) => {
     setTimeout(() => {
       const mockResponse = {
@@ -52,18 +45,16 @@ export const createMockPayment = async (planId, billingPeriod, userEmail) => {
 
       console.log('Mock payment created:', mockResponse)
       resolve(mockResponse)
-    }, 1000) // 1 секунда задержки для реалистичности
+    }, 1000)
   })
 }
 
-// НОВАЯ функция для инициализации mock виджета
 export const initMockPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
   try {
     console.log('Инициализируем mock платеж для:', planId, billingPeriod)
 
     const paymentResponse = await createMockPayment(planId, billingPeriod, userEmail)
 
-    // Симулируем успешное создание виджета
     setTimeout(() => {
       console.log('Mock виджет готов')
       if (onSuccess) {
@@ -71,7 +62,6 @@ export const initMockPayment = async (planId, billingPeriod, userEmail, onSucces
       }
     }, 500)
 
-    // Возвращаем mock объект виджета
     return {
       render: (containerId) => {
         const container = document.getElementById(containerId)
@@ -113,7 +103,6 @@ export const initMockPayment = async (planId, billingPeriod, userEmail, onSucces
           </div>
         `
 
-        // Обработчик успешной оплаты
         document.getElementById('mock-pay-button')?.addEventListener('click', () => {
           container.innerHTML = `
             <div class="text-center py-8">
@@ -123,12 +112,10 @@ export const initMockPayment = async (planId, billingPeriod, userEmail, onSucces
           `
 
           setTimeout(() => {
-            // Перенаправляем на страницу успеха
             window.location.href = `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.payment_id}&demo=true`
           }, 2000)
         })
 
-        // Обработчик ошибки
         document.getElementById('mock-fail-button')?.addEventListener('click', () => {
           if (onError) {
             onError('Демо ошибка оплаты')
@@ -146,5 +133,10 @@ export const initMockPayment = async (planId, billingPeriod, userEmail, onSucces
   }
 }
 
-// Оригинальная функция для реального YooKassa (пока не используется)
-export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSuccess, on
+export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
+  if (PAYMENT_CONFIG.mode === 'mock') {
+    return await initMockPayment(planId, billingPeriod, userEmail, onSuccess, onError)
+  }
+
+  throw new Error('Реальные платежи пока не настроены. Используйте mock режим.')
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { initMockPayment } from '../../config/payment'  // ИСПРАВЛЕНО: используем mock
+import { initMockPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
@@ -58,7 +58,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
     initializePayment()
 
-    // Cleanup
     return () => {
       if (widgetInstance && widgetInstance.destroy) {
         widgetInstance.destroy()
@@ -100,7 +99,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
           </div>
         )}
 
-        {/* Контейнер для mock виджета */}
         <div id="yookassa-payment-form"></div>
 
         <div className="mt-4 text-sm text-gray-500 text-center">

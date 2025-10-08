@@ -25,26 +25,8 @@ export default function PaymentSuccessPage() {
           throw new Error('Недостающие параметры платежа')
         }
 
-        if (isDemo) {
-          // Демо режим - просто обновляем план
-          console.log('Демо платеж - обновляем план пользователя')
-          await handleSuccessfulPayment(planId, billingPeriod, paymentId)
-          return
-        }
-
-        if (!paymentId) {
-          throw new Error('ID платежа не найден')
-        }
-
-        // Проверяем статус платежа через backend
-        console.log('Проверяем статус платежа:', paymentId)
-        const paymentStatus = await checkPaymentStatus(paymentId)
-
-        if (paymentStatus.status === 'succeeded') {
-          await handleSuccessfulPayment(planId, billingPeriod, paymentId)
-        } else {
-          throw new Error(`Платеж не завершен. Статус: ${paymentStatus.status}`)
-        }
+        console.log('Demo платеж - обновляем план пользователя')
+        await handleSuccessfulPayment(planId, billingPeriod, paymentId)
 
       } catch (error) {
         console.error('Ошибка обработки результата платежа:', error)
@@ -56,19 +38,6 @@ export default function PaymentSuccessPage() {
     handlePaymentResult()
   }, [searchParams, user, updateUserPlan])
 
-  const checkPaymentStatus = async (paymentId) => {
-    try {
-      const response = await fetch(`/api/payments/status/${paymentId}`)
-      if (!response.ok) {
-        throw new Error('Ошибка проверки статуса платежа')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Ошибка проверки статуса:', error)
-      throw error
-    }
-  }
-
   const handleSuccessfulPayment = async (planId, billingPeriod, paymentId) => {
     try {
       if (!user) {
@@ -77,11 +46,11 @@ export default function PaymentSuccessPage() {
 
       console.log('Обновляем план пользователя:', { planId, billingPeriod })
 
-      // Обновляем план пользователя в базе данных
       await supabaseAuthService.updateUserPlan(user.id, planId, billingPeriod)
 
-      // Обновляем состояние пользователя в контексте
-      await updateUserPlan(planId, billingPeriod)
+      if (updateUserPlan) {
+        await updateUserPlan(planId, billingPeriod)
+      }
 
       setPaymentInfo({
         planId: planId.toUpperCase(),
@@ -91,7 +60,6 @@ export default function PaymentSuccessPage() {
 
       setIsSuccess(true)
 
-      // Аналитика
       trackEvent('payment_success', {
         plan_id: planId,
         billing_period: billingPeriod,
@@ -107,18 +75,6 @@ export default function PaymentSuccessPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const getPlanName = (planId) => {
-    switch(planId) {
-      case 'PRO': return 'Профессиональный'
-      case 'ENTERPRISE': return 'Корпоративный'
-      default: return planId
-    }
-  }
-
-  const getBillingPeriodName = (period) => {
-    return period === 'yearly' ? 'Годовая' : 'Месячная'
   }
 
   if (isLoading) {
@@ -142,24 +98,14 @@ export default function PaymentSuccessPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Ошибка платежа
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ошибка платежа</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/pricing')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-            >
-              Попробовать еще раз
-            </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-            >
-              Вернуться в панель
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/pricing')}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+          >
+            Попробовать еще раз
+          </button>
         </div>
       </div>
     )
@@ -174,44 +120,15 @@ export default function PaymentSuccessPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Оплата прошла успешно!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Ваша подписка успешно активирована
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Оплата прошла успешно!</h2>
+          <p className="text-gray-600 mb-4">Ваша подписка успешно активирована</p>
 
-          {paymentInfo && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-2">Детали подписки:</h3>
-              <p className="text-sm text-gray-600">
-                <strong>План:</strong> {getPlanName(paymentInfo.planId)}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Период:</strong> {getBillingPeriodName(paymentInfo.billingPeriod)}
-              </p>
-              {paymentInfo.paymentId && (
-                <p className="text-sm text-gray-600">
-                  <strong>ID платежа:</strong> {paymentInfo.paymentId}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-            >
-              Перейти к панели управления
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-            >
-              На главную
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+          >
+            Перейти к панели управления
+          </button>
         </div>
       </div>
     )
