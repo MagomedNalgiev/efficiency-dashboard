@@ -3,7 +3,7 @@ export const PAYMENT_CONFIG = {
   // Данные из переменных окружения
   shopId: import.meta.env.VITE_YOOKASSA_SHOP_ID,
   secretKey: import.meta.env.VITE_YOOKASSA_SECRET_KEY,
-  mode: import.meta.env.VITE_PAYMENT_MODE || 'demo', // 'demo' или 'production'
+  mode: import.meta.env.VITE_PAYMENT_MODE || 'mock', // 'demo' или 'production'
 
   // URL для возврата после оплаты
   returnUrl: window.location.origin + '/payment/success',
