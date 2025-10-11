@@ -44,37 +44,28 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       try {
         setIsLoading(true)
         await loadSDK()
-
         const payment = await createYooKassaPayment(planId, billingPeriod, user.email)
         const token = payment.confirmation?.confirmation_token
         if (!token) throw new Error('Нет confirmation_token')
-
         const container = containerRef.current
         if (!container) throw new Error('Контейнер не найден')
         container.innerHTML = ''
-
         const checkout = new window.YooMoneyCheckoutWidget({
           confirmation_token: token,
-          return_url: `${window.location.origin}/payment/success`,
+          return_url: `${window.location.origin}/payment/success?plan=${planId}&period=${billingPeriod}&payment_id=${payment.id}`,
           error_callback: (err) => {
             console.error(err)
-            setError('Ошибка виджета: ' + (err.message||''))
+            setError('Ошибка виджета: ' + (err.message || ''))
             setIsLoading(false)
           }
         })
-
-        checkout.on('confirmation_success', (details) => {
-          trackEvent('payment_success',{plan_id:planId,billing_period:billingPeriod,user_id:user.id,payment_id:details.payment_id})
-          if(onSuccess) onSuccess(details)
-        })
-
-        // Рендерим в DOM-элемент
+        // Рендерим в конкретный DOM-элемент
         await checkout.render(container)
         widgetRef.current = checkout
       } catch (e) {
         console.error(e)
         setError(e.message)
-        if(onError) onError(e)
+        if (onError) onError(e)
       } finally {
         setIsLoading(false)
       }
@@ -105,7 +96,12 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
         </header>
         <div className="p-6">
           {isLoading && <div className="text-center text-white">Загрузка...</div>}
-          {error && <div className="text-red-400 mb-4">{error}</div>}
+          {error && (
+            <div className="text-red-400 mb-4">
+              {error}
+              <button onClick={handleClose} className="ml-4 text-sm text-white bg-red-600 px-2 py-1 rounded">Закрыть</button>
+            </div>
+          )}
           <div className="payment-widget-container">
             <div ref={containerRef} className="yookassa-embed"></div>
           </div>
