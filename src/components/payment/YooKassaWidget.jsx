@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { initYooKassaPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
+import '../index.css';
+
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
   const { user } = useAuth()
@@ -21,8 +23,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       setError(null)
 
       try {
-        console.log('Инициализируем платежную форму для:', planId, billingPeriod)
-
         const widget = await initYooKassaPayment(
           planId,
           billingPeriod,
@@ -40,12 +40,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
             console.error('Ошибка платежа:', error)
             setError(error)
             setIsLoading(false)
-            trackEvent('payment_error', {
-              plan_id: planId,
-              billing_period: billingPeriod,
-              user_id: user.id,
-              error: error
-            })
             if (onError) onError(error)
           }
         )
@@ -79,7 +73,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      {/* Модальное окно в стиле сайта - темное с градиентом */}
+      {/* Модальное окно в стиле сайта */}
       <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 rounded-xl shadow-2xl border border-slate-700/50 backdrop-blur-sm w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
 
         {/* Заголовок */}
@@ -101,7 +95,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
         {/* Контент */}
         <div className="p-6">
-          {/* Загрузка */}
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-400 border-t-transparent mb-4"></div>
@@ -110,7 +103,6 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
             </div>
           )}
 
-          {/* Ошибка */}
           {error && (
             <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4 mb-6">
               <div className="flex items-start space-x-3">
@@ -127,12 +119,10 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
             </div>
           )}
 
-          {/* Контейнер для виджета YooKassa */}
           <div className="payment-widget-container">
             <div id="yookassa-payment-form" className="yookassa-embed"></div>
           </div>
 
-          {/* Информация о безопасности */}
           <div className="mt-6 pt-6 border-t border-slate-700/50">
             <div className="flex items-center justify-center space-x-6 text-sm text-slate-400">
               <div className="flex items-center space-x-2">

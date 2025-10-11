@@ -1,3 +1,5 @@
+import crypto from 'node:crypto'
+
 export async function handler(event, context) {
   // CORS заголовки
   const headers = {
