@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { initYooKassaPayment } from '../../config/payment'
+import { createYooKassaPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
@@ -8,79 +8,124 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
   const containerRef = useRef(null)
   const widgetRef = useRef(null)
   const styleRef = useRef(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    // Если виджет уже инициализирован — не делать снова
-    if (widgetRef.current) return
-
-    // Добавляем стили единожды
-    const style = document.createElement('style')
-    style.textContent = `
-      .yookassa-embed { border-radius:12px; overflow:hidden; background:rgba(30,41,59,0.5); border:1px solid rgba(71,85,105,0.3); min-height:400px; }
-      .payment-widget-container { --yookassa-color-primary:#3b82f6; --yookassa-color-background:#1e293b; --yookassa-color-surface:#334155; --yookassa-color-text:#f8fafc; --yookassa-color-text-secondary:#94a3b8; --yookassa-border-radius:8px; }
-      #yookassa-payment-form iframe { border-radius:12px!important; border:1px solid rgba(71,85,105,0.3)!important; }
-    `
-    document.head.appendChild(style)
-    styleRef.current = style
-
-    const initialize = async () => {
-      if (!user?.email) {
-        setError('Необходимо авторизоваться')
+  // Загрузка YooKassa SDK
+  const loadYooKassaSDK = () => {
+    return new Promise((resolve, reject) => {
+      if (window.YooMoneyCheckoutWidget) {
+        resolve()
         return
       }
-      setIsLoading(true)
+      const script = document.createElement('script')
+      script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js'
+      script.onload = resolve
+      script.onerror = () => reject(new Error('Ошибка загрузки YooKassa SDK'))
+      document.head.appendChild(script)
+    })
+  }
+
+  useEffect(() => {
+    if (!user?.email) {
+      setError('Необходимо авторизоваться')
+      setIsLoading(false)
+      return
+    }
+
+    // Добавляем стили единожды
+    if (!styleRef.current) {
+      const style = document.createElement('style')
+      style.textContent = `
+        .yookassa-embed { border-radius:12px; overflow:hidden; background:rgba(30,41,59,0.5); border:1px solid rgba(71,85,105,0.3); min-height:400px; }
+        .payment-widget-container { --yookassa-color-primary:#3b82f6; --yookassa-color-background:#1e293b; --yookassa-color-surface:#334155; --yookassa-color-text:#f8fafc; --yookassa-color-text-secondary:#94a3b8; --yookassa-border-radius:8px; }
+        #yookassa-payment-form iframe { border-radius:12px!important; border:1px solid rgba(71,85,105,0.3)!important; }
+      `
+      document.head.appendChild(style)
+      styleRef.current = style
+    }
+
+    const initialize = async () => {
       try {
-        const widget = await initYooKassaPayment(
-          planId,
-          billingPeriod,
-          user.email,
-          (paymentData) => {
-            trackEvent('payment_initiated', {
-              plan_id: planId,
-              billing_period: billingPeriod,
-              user_id: user.id,
-              payment_id: paymentData.id
-            })
-            if (onSuccess) onSuccess(paymentData)
-          },
-          (err) => {
-            setError(err)
-            if (onError) onError(err)
+        // Загружаем SDK
+        await loadYooKassaSDK()
+
+        // Создаем платеж
+        const paymentResponse = await createYooKassaPayment(planId, billingPeriod, user.email)
+
+        if (!paymentResponse.confirmation?.confirmation_token) {
+          throw new Error('Не получен confirmation_token от YooKassa')
+        }
+
+        // Дожидаемся готовности контейнера
+        if (!containerRef.current) {
+          throw new Error('Контейнер не готов')
+        }
+
+        // Очищаем контейнер
+        containerRef.current.innerHTML = ''
+
+        // Создаем виджет
+        const checkout = new window.YooMoneyCheckoutWidget({
+          confirmation_token: paymentResponse.confirmation.confirmation_token,
+          return_url: `${window.location.origin}/payment/success?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.id}`,
+          error_callback: function(widgetError) {
+            console.error('YooKassa widget error:', widgetError)
+            setError('Ошибка виджета оплаты: ' + (widgetError.message || 'Неизвестная ошибка'))
+            setIsLoading(false)
           }
-        )
-        widgetRef.current = widget
-      } catch (err) {
-        setError(err.message || 'Ошибка инициализации')
-        if (onError) onError(err)
-      } finally {
+        })
+
+        // Рендерим виджет
+        await checkout.render('yookassa-payment-form')
+
+        widgetRef.current = checkout
         setIsLoading(false)
+
+        // Трекаем событие
+        trackEvent('payment_initiated', {
+          plan_id: planId,
+          billing_period: billingPeriod,
+          user_id: user.id,
+          payment_id: paymentResponse.id
+        })
+
+        if (onSuccess) onSuccess(paymentResponse)
+
+      } catch (err) {
+        console.error('Ошибка инициализации платежа:', err)
+        setError(err.message || 'Ошибка при создании платежа')
+        setIsLoading(false)
+        // НЕ вызываем onError здесь, чтобы не закрывать модалку
       }
     }
 
-    // Очистка контейнера перед инициализацией
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ''
-    }
     initialize()
 
     return () => {
-      // Удаляем виджет и стили при размонтировании
+      // Очистка при размонтировании
       if (widgetRef.current?.destroy) {
-        widgetRef.current.destroy()
+        try {
+          widgetRef.current.destroy()
+        } catch (e) {
+          console.warn('Ошибка при уничтожении виджета:', e)
+        }
         widgetRef.current = null
       }
-      if (styleRef.current) {
+      if (styleRef.current && styleRef.current.parentNode) {
         document.head.removeChild(styleRef.current)
         styleRef.current = null
       }
     }
-  }, [planId, billingPeriod, user, onSuccess, onError])
+  }, [planId, billingPeriod, user])
 
   const handleClose = () => {
     if (widgetRef.current?.destroy) {
-      widgetRef.current.destroy()
+      try {
+        widgetRef.current.destroy()
+      } catch (e) {
+        console.warn('Ошибка при уничтожении виджета:', e)
+      }
       widgetRef.current = null
     }
     if (onClose) onClose()
@@ -112,6 +157,12 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
             <div className="rounded-lg p-4 mb-6 bg-red-800 border border-red-600">
               <h4 className="font-medium text-red-400">Ошибка инициализации оплаты</h4>
               <p className="text-sm mt-1 text-red-200">{error}</p>
+              <button
+                onClick={handleClose}
+                className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+              >
+                Закрыть
+              </button>
             </div>
           )}
 
@@ -119,13 +170,11 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
             <div id="yookassa-payment-form" className="yookassa-embed" ref={containerRef}></div>
           </div>
 
-          {/* Подвал */}
           <div className="mt-6 pt-6 border-t border-gray-700 text-gray-400 text-center text-xs">
             Принимаем карты Visa, MasterCard, МИР • SberPay • YooMoney
           </div>
         </div>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
