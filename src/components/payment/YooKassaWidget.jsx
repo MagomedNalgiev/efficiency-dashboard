@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { initYooKassaPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
-import '../index.css';
+import '.../index.css'
 
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
