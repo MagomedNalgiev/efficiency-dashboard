@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const fetch = require('node-fetch') // Убедитесь, что в package.json добавлен node-fetch
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -13,7 +14,11 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) }
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' })
+    }
   }
 
   try {
@@ -21,13 +26,6 @@ exports.handler = async (event, context) => {
 
     const shopId = process.env.YOOKASSA_SHOP_ID
     const secretKey = process.env.YOOKASSA_SECRET_KEY
-
-    console.log('Environment check:', {
-      hasShopId: !!shopId,
-      hasSecretKey: !!secretKey,
-      planId,
-      billingPeriod
-    })
 
     if (!shopId || !secretKey) {
       return {
@@ -37,19 +35,20 @@ exports.handler = async (event, context) => {
       }
     }
 
+    // Определение тарифов
     const plans = {
       pro: {
-        monthly: { amount: 990.00, description: 'Metricspace Pro - месячная подписка' },
-        yearly: { amount: 9900.00, description: 'Metricspace Pro - годовая подписка (скидка 17%)' }
+        monthly: { amount: 990.00, description: 'Metricspace Pro – месячная подписка' },
+        yearly: { amount: 9900.00, description: 'Metricspace Pro – годовая подписка (скидка 17%)' }
       },
       enterprise: {
-        monthly: { amount: 4990.00, description: 'Metricspace Enterprise - месячная подписка' },
-        yearly: { amount: 49900.00, description: 'Metricspace Enterprise - годовая подписка (скидка 17%)' }
+        monthly: { amount: 4990.00, description: 'Metricspace Enterprise – месячная подписка' },
+        yearly: { amount: 49900.00, description: 'Metricspace Enterprise – годовая подписка (скидка 17%)' }
       }
     }
 
-    const plan = plans[planId.toLowerCase()]
-    if (!plan || !plan[billingPeriod]) {
+    const planKey = planId.toLowerCase()
+    if (!plans[planKey] || !plans[planKey][billingPeriod]) {
       return {
         statusCode: 400,
         headers,
@@ -57,25 +56,46 @@ exports.handler = async (event, context) => {
       }
     }
 
+    const { amount, description } = plans[planKey][billingPeriod]
+
+    // Формирование данных платежа с обязательным разделом receipt
     const paymentData = {
       amount: {
-        value: plan[billingPeriod].amount.toString(),
+        value: amount.toFixed(2),
         currency: 'RUB'
       },
-      confirmation: { type: 'embedded' },
+      confirmation: {
+        type: 'embedded'
+      },
       capture: true,
-      description: plan[billingPeriod].description,
+      description,
       metadata: {
         plan_id: planId,
         billing_period: billingPeriod,
         user_email: userEmail,
         source: 'metricspace_web'
-      }
+      },
+      receipt: {
+        customer: {
+          email: userEmail
+        },
+        items: [
+          {
+            description,
+            quantity: 1.00,
+            amount: {
+              value: amount.toFixed(2),
+              currency: 'RUB'
+            },
+            vat_code: 2 // Код НДС 20%
+          }
+        ],
+        tax_system_code: 1 // Общая система налогообложения
+      },
+      send: true // Отправить чек на почту покупателя
     }
 
     const idempotenceKey = crypto.randomUUID()
-
-    console.log('Creating payment with YooKassa...', { paymentId: idempotenceKey })
 
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
@@ -90,7 +110,6 @@ exports.handler = async (event, context) => {
     const result = await response.json()
 
     if (!response.ok) {
-      console.error('YooKassa API error:', result)
       return {
         statusCode: response.status,
         headers,
@@ -98,7 +117,6 @@ exports.handler = async (event, context) => {
       }
     }
 
-    console.log('Payment created successfully:', result.id)
     return {
       statusCode: 200,
       headers,
@@ -106,7 +124,6 @@ exports.handler = async (event, context) => {
     }
 
   } catch (error) {
-    console.error('Payment function error:', error)
     return {
       statusCode: 500,
       headers,
