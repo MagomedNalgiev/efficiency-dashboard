@@ -20,6 +20,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       }
       const script = document.createElement('script')
       script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js'
+      script.async = true
       script.onload = resolve
       script.onerror = () => reject(new Error('Ошибка загрузки YooKassa SDK'))
       document.head.appendChild(script)
@@ -47,56 +48,51 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
     const initialize = async () => {
       try {
+        setIsLoading(true)
         // Загружаем SDK
         await loadYooKassaSDK()
 
-        // Создаем платеж
+        // Создаем платеж через Netlify Function
         const paymentResponse = await createYooKassaPayment(planId, billingPeriod, user.email)
-
-        if (!paymentResponse.confirmation?.confirmation_token) {
+        const token = paymentResponse.confirmation?.confirmation_token
+        if (!token) {
           throw new Error('Не получен confirmation_token от YooKassa')
-        }
-
-        // Дожидаемся готовности контейнера
-        if (!containerRef.current) {
-          throw new Error('Контейнер не готов')
         }
 
         // Очищаем контейнер
         containerRef.current.innerHTML = ''
 
-        // Создаем виджет
+        // Инициализируем виджет
         const checkout = new window.YooMoneyCheckoutWidget({
-          confirmation_token: paymentResponse.confirmation.confirmation_token,
+          confirmation_token: token,
           return_url: `${window.location.origin}/payment/success?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.id}`,
-          error_callback: function(widgetError) {
+          error_callback: (widgetError) => {
             console.error('YooKassa widget error:', widgetError)
             setError('Ошибка виджета оплаты: ' + (widgetError.message || 'Неизвестная ошибка'))
             setIsLoading(false)
           }
         })
 
-        // Рендерим виджет
-        await checkout.render('yookassa-payment-form')
-
-        widgetRef.current = checkout
-        setIsLoading(false)
-
-        // Трекаем событие
-        trackEvent('payment_initiated', {
-          plan_id: planId,
-          billing_period: billingPeriod,
-          user_id: user.id,
-          payment_id: paymentResponse.id
+        // Слушаем успешное завершение
+        checkout.on('confirmation_success', (details) => {
+          trackEvent('payment_success', {
+            plan_id: planId,
+            billing_period: billingPeriod,
+            user_id: user.id,
+            payment_id: details.payment_id
+          })
+          if (onSuccess) onSuccess(details)
         })
 
-        if (onSuccess) onSuccess(paymentResponse)
-
+        // Рендерим виджет
+        await checkout.render('yookassa-payment-form')
+        widgetRef.current = checkout
       } catch (err) {
         console.error('Ошибка инициализации платежа:', err)
         setError(err.message || 'Ошибка при создании платежа')
+        if (onError) onError(err)
+      } finally {
         setIsLoading(false)
-        // НЕ вызываем onError здесь, чтобы не закрывать модалку
       }
     }
 
@@ -107,25 +103,21 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       if (widgetRef.current?.destroy) {
         try {
           widgetRef.current.destroy()
-        } catch (e) {
-          console.warn('Ошибка при уничтожении виджета:', e)
-        }
+        } catch {}
         widgetRef.current = null
       }
-      if (styleRef.current && styleRef.current.parentNode) {
+      if (styleRef.current) {
         document.head.removeChild(styleRef.current)
         styleRef.current = null
       }
     }
-  }, [planId, billingPeriod, user])
+  }, [planId, billingPeriod, user, onSuccess, onError])
 
   const handleClose = () => {
     if (widgetRef.current?.destroy) {
       try {
         widgetRef.current.destroy()
-      } catch (e) {
-        console.warn('Ошибка при уничтожении виджета:', e)
-      }
+      } catch {}
       widgetRef.current = null
     }
     if (onClose) onClose()
@@ -133,7 +125,8 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="rounded-xl shadow-2xl backdrop-blur-sm w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" style={{ background:'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)', border:'1px solid rgba(71,85,105,0.5)' }}>
+      <div className="rounded-xl shadow-2xl backdrop-blur-sm w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+           style={{ background:'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)', border:'1px solid rgba(71,85,105,0.5)' }}>
         <div className="flex justify-between items-center p-6" style={{ borderBottom:'1px solid rgba(71,85,105,0.5)' }}>
           <div>
             <h3 className="text-xl font-bold text-white">Оплата подписки</h3>
@@ -155,12 +148,10 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
           {error && (
             <div className="rounded-lg p-4 mb-6 bg-red-800 border border-red-600">
-              <h4 className="font-medium text-red-400">Ошибка инициализации оплаты</h4>
+              <h4 className="font-medium text-red-400">Ошибка оплаты</h4>
               <p className="text-sm mt-1 text-red-200">{error}</p>
-              <button
-                onClick={handleClose}
-                className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
-              >
+              <button onClick={handleClose}
+                      className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors">
                 Закрыть
               </button>
             </div>
