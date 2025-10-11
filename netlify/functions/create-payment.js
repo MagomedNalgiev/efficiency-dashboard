@@ -1,7 +1,6 @@
-import crypto from 'node:crypto'
+const crypto = require('crypto')
 
-export async function handler(event, context) {
-  // CORS заголовки
+exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -9,29 +8,26 @@ export async function handler(event, context) {
     'Content-Type': 'application/json'
   }
 
-  // Обработка preflight запроса
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    }
+    return { statusCode: 200, headers, body: '' }
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method Not Allowed' })
-    }
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) }
   }
 
   try {
     const { planId, billingPeriod, userEmail } = JSON.parse(event.body)
 
-    // Получаем ключи из переменных окружения
     const shopId = process.env.YOOKASSA_SHOP_ID
     const secretKey = process.env.YOOKASSA_SECRET_KEY
+
+    console.log('Environment check:', {
+      hasShopId: !!shopId,
+      hasSecretKey: !!secretKey,
+      planId,
+      billingPeriod
+    })
 
     if (!shopId || !secretKey) {
       return {
@@ -41,7 +37,6 @@ export async function handler(event, context) {
       }
     }
 
-    // Конфигурация планов
     const plans = {
       pro: {
         monthly: { amount: 990.00, description: 'Metricspace Pro - месячная подписка' },
@@ -67,9 +62,7 @@ export async function handler(event, context) {
         value: plan[billingPeriod].amount.toString(),
         currency: 'RUB'
       },
-      confirmation: {
-        type: 'embedded'
-      },
+      confirmation: { type: 'embedded' },
       capture: true,
       description: plan[billingPeriod].description,
       metadata: {
@@ -80,10 +73,10 @@ export async function handler(event, context) {
       }
     }
 
-    // Создаем идемпотентный ключ
     const idempotenceKey = crypto.randomUUID()
 
-    // Запрос к YooKassa API
+    console.log('Creating payment with YooKassa...', { paymentId: idempotenceKey })
+
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
       headers: {
@@ -105,6 +98,7 @@ export async function handler(event, context) {
       }
     }
 
+    console.log('Payment created successfully:', result.id)
     return {
       statusCode: 200,
       headers,
@@ -116,7 +110,7 @@ export async function handler(event, context) {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: JSON.stringify({ error: 'Internal server error', details: error.message })
     }
   }
 }
