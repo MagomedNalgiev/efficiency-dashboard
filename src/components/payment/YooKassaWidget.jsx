@@ -8,7 +8,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
   const containerRef = useRef(null)
   const widgetRef = useRef(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!user?.email) {
@@ -17,87 +17,99 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       return
     }
 
-    const loadScript = () => {
-      return new Promise((resolve, reject) => {
+    const loadScript = () =>
+      new Promise((resolve, reject) => {
         if (window.YooMoneyCheckoutUI) return resolve()
         const script = document.createElement('script')
         script.src = 'https://yoomoney.ru/checkout-ui/v1/checkout.js'
         script.async = true
-        script.onload = resolve
-        script.onerror = () => reject(new Error('Не удалось загрузить виджет YooKassa'))
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Не удалось загрузить SDK YooKassa'))
         document.head.appendChild(script)
       })
-    }
 
-    const init = async () => {
+    const initialize = async () => {
       try {
         setIsLoading(true)
         await loadScript()
 
-        // Очистка контейнера от старых инстансов
+        // Очищаем контейнер от предыдущего инстанса
         const container = containerRef.current
-        if (container) container.innerHTML = ''
+        if (!container) throw new Error('Контейнер не найден')
+        container.innerHTML = ''
 
-        // Создание платежа на бэкенде
-        const paymentData = await initYooKassaPayment(planId, billingPeriod, user.email)
-        const token = paymentData.confirmation.confirmation_token
+        // Получаем confirmation token
+        const payment = await initYooKassaPayment(planId, billingPeriod, user.email)
+        const token = payment.confirmation.confirmation_token
+        if (!token) throw new Error('Не получен confirmation_token')
 
-        // Инициализация виджета
+        // Инициализируем виджет
         const widget = new window.YooMoneyCheckoutUI({
           confirmation_token: token,
-          container: container
+          container: container,              // передаем DOM-элемент
+          error_callback: ({ message }) => {
+            setError(message || 'Ошибка платежного виджета')
+            setIsLoading(false)
+          }
         })
+
+        // Слушаем успешное завершение
+        widget.on('success', (details) => {
+          trackEvent('payment_success', {
+            plan_id: planId,
+            billing_period: billingPeriod,
+            user_id: user.id,
+            payment_id: details.payment_id
+          })
+          onSuccess && onSuccess(details)
+        })
+
+        // Рендерим в переданный контейнер
+        await widget.render(container)
 
         widgetRef.current = widget
-        setIsLoading(false)
-
-        trackEvent('payment_initiated', {
-          plan_id: planId,
-          billing_period: billingPeriod,
-          user_id: user.id,
-          payment_id: paymentData.id
-        })
-
-        widget.on('success', (res) => {
-          if (onSuccess) onSuccess(res)
-        })
-        widget.on('error', (err) => {
-          setError(err.message || 'Ошибка платежа')
-          if (onError) onError(err)
-        })
-
-      } catch (err) {
-        setError(err.message || 'Не удалось инициализировать оплату')
-        if (onError) onError(err)
+      } catch (e) {
+        const msg = e.message || String(e)
+        setError(msg)
+        onError && onError(new Error(msg))
+      } finally {
         setIsLoading(false)
       }
     }
 
-    init()
+    initialize()
 
     return () => {
       if (widgetRef.current?.destroy) {
-        widgetRef.current.destroy()
+        try {
+          widgetRef.current.destroy()
+        } catch {}
         widgetRef.current = null
       }
     }
-  }, [planId, billingPeriod, user])
+  }, [planId, billingPeriod, user, onSuccess, onError])
 
   const handleClose = () => {
-    if (widgetRef.current?.destroy) widgetRef.current.destroy()
-    if (onClose) onClose()
+    widgetRef.current?.destroy()
+    onClose && onClose()
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md mx-4 overflow-hidden">
-        <header className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">Оплата подписки</h3>
-          <button onClick={handleClose} className="text-xl">&times;</button>
+      <div className="bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#1e293b] border border-gray-700 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
+        <header className="flex justify-between items-center p-6 border-b border-gray-700">
+          <div>
+            <h3 className="text-xl font-bold text-white">Оплата подписки</h3>
+            <p className="text-sm text-gray-400">
+              {planId === 'pro' ? 'Профессиональный план' : 'Корпоративный план'} •{' '}
+              {billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'} подписка
+            </p>
+          </div>
+          <button onClick={handleClose} className="text-gray-400 hover:text-white text-2xl">✕</button>
         </header>
-        <div className="p-4">
-          {isLoading && <p>Загрузка формы оплаты...</p>}
-          {error && <p className="text-red-600 mb-4">{error}</p>}
+        <div className="p-6">
+          {isLoading && <p className="text-white">Загрузка формы оплаты...</p>}
+          {error && <p className="text-red-500 mb-4">{error}</p>}
           <div ref={containerRef} className="yookassa-embed"></div>
         </div>
       </div>
