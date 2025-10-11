@@ -27,7 +27,7 @@ export default function PaymentSuccessPage() {
 
         console.log('Обрабатываем результат платежа:', { planId, billingPeriod, paymentId })
 
-        // Проверяем статус платежа в YooKassa
+        // Проверяем статус платежа через Netlify Functions
         const paymentStatus = await checkPaymentStatus(paymentId)
         console.log('Статус платежа:', paymentStatus)
 
@@ -36,9 +36,7 @@ export default function PaymentSuccessPage() {
         } else if (paymentStatus.status === 'canceled') {
           throw new Error('Платеж был отменен')
         } else if (paymentStatus.status === 'pending') {
-          // Платеж еще обрабатывается - можем показать соответствующее сообщение
           setIsLoading(true)
-          // Можно добавить периодическую проверку статуса
           setTimeout(() => handlePaymentResult(), 3000)
           return
         } else {
@@ -61,12 +59,8 @@ export default function PaymentSuccessPage() {
         throw new Error('Пользователь не авторизован')
       }
 
-      console.log('Обновляем план пользователя:', { planId, billingPeriod })
-
-      // Обновляем план в базе данных
       await supabaseAuthService.updateUserPlan(user.id, planId, billingPeriod)
 
-      // Обновляем локальное состояние
       if (updateUserPlan) {
         await updateUserPlan(planId, billingPeriod)
       }
@@ -89,8 +83,6 @@ export default function PaymentSuccessPage() {
         amount: paymentStatus.amount?.value
       })
 
-      console.log('План успешно обновлен')
-
     } catch (error) {
       console.error('Ошибка обновления плана:', error)
       throw error
@@ -101,37 +93,39 @@ export default function PaymentSuccessPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Обрабатываем платеж...
-        </h2>
-        <p className="text-gray-600">Пожалуйста, подождите</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col justify-center items-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+          <div className="animate-spin rounded-full h-16 w-16 border-2 border-white/30 border-t-white mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-white mb-2 text-center">
+            Обрабатываем платеж...
+          </h2>
+          <p className="text-white/70 text-center">Пожалуйста, подождите</p>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col justify-center items-center px-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl shadow-2xl p-8 max-w-md w-full text-center border border-white/20">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ошибка платежа</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Ошибка платежа</h2>
+          <p className="text-white/70 mb-6">{error}</p>
           <div className="space-y-3">
             <button
               onClick={() => navigate('/pricing')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium"
             >
               Попробовать еще раз
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300"
+              className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-lg transition-colors"
             >
               Вернуться к дашборду
             </button>
@@ -143,27 +137,27 @@ export default function PaymentSuccessPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col justify-center items-center px-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl shadow-2xl p-8 max-w-md w-full text-center border border-white/20">
+          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Оплата прошла успешно!</h2>
-          <p className="text-gray-600 mb-4">Ваша подписка успешно активирована</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Оплата прошла успешно!</h2>
+          <p className="text-white/70 mb-4">Ваша подписка успешно активирована</p>
 
           {paymentInfo && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-              <p className="text-sm text-gray-600">План: <span className="font-semibold">{paymentInfo.planId}</span></p>
-              <p className="text-sm text-gray-600">Период: <span className="font-semibold">{paymentInfo.billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'}</span></p>
-              <p className="text-sm text-gray-600">ID платежа: <span className="font-mono text-xs">{paymentInfo.paymentId}</span></p>
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 mb-6 text-left border border-white/10">
+              <p className="text-sm text-white/70">План: <span className="font-semibold text-white">{paymentInfo.planId}</span></p>
+              <p className="text-sm text-white/70">Период: <span className="font-semibold text-white">{paymentInfo.billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'}</span></p>
+              <p className="text-sm text-white/70">ID платежа: <span className="font-mono text-xs text-white/90">{paymentInfo.paymentId}</span></p>
             </div>
           )}
 
           <button
             onClick={() => navigate('/dashboard')}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium"
           >
             Перейти к панели управления
           </button>

@@ -1,33 +1,75 @@
-// netlify/functions/payment-status.js
-export default async (request, context) => {
-  const url = new URL(request.url)
-  const paymentId = url.pathname.split('/').pop()
-
-  if (!paymentId) {
-    return new Response(JSON.stringify({ error: 'Payment ID required' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    })
+export async function handler(event, context) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
   }
 
-  // Mock статус для тестирования
-  const mockStatus = {
-    payment_id: paymentId,
-    status: 'succeeded',
-    paid: true,
-    amount: { value: '990.00', currency: 'RUB' },
-    test_mode: true
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' }
   }
 
-  return new Response(JSON.stringify(mockStatus), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' })
     }
-  })
-}
+  }
 
-export const config = {
-  path: "/api/payments/status/*"
+  try {
+    const paymentId = event.queryStringParameters?.paymentId
+
+    if (!paymentId) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Payment ID required' })
+      }
+    }
+
+    const shopId = process.env.YOOKASSA_SHOP_ID
+    const secretKey = process.env.YOOKASSA_SECRET_KEY
+
+    if (!shopId || !secretKey) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'YooKassa credentials not configured' })
+      }
+    }
+
+    const response = await fetch(`https://api.yookassa.ru/v3/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${shopId}:${secretKey}`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      return {
+        statusCode: response.status,
+        headers,
+        body: JSON.stringify({ error: 'Payment status check failed', details: result })
+      }
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(result)
+    }
+
+  } catch (error) {
+    console.error('Payment status function error:', error)
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Internal server error' })
+    }
+  }
 }

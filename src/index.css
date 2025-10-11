@@ -103,4 +103,30 @@ button:focus-visible {
   transform: scale(0);
 }
 
+/* Стили для YooKassa виджета в темной теме */
+.yookassa-embed {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  min-height: 400px;
+}
+
+/* Кастомизация элементов YooKassa виджета */
+.payment-widget-container {
+  --yookassa-color-primary: #3b82f6;
+  --yookassa-color-background: #1e293b;
+  --yookassa-color-surface: #334155;
+  --yookassa-color-text: #f8fafc;
+  --yookassa-color-text-secondary: #94a3b8;
+  --yookassa-border-radius: 8px;
+}
+
+/* Переопределение стилей виджета через CSS переменные если поддерживается */
+#yookassa-payment-form iframe {
+  border-radius: 12px !important;
+  border: 1px solid rgba(71, 85, 105, 0.3) !important;
+}
+
+
 

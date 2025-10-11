@@ -1,14 +1,11 @@
-// Конфигурация платежной системы YooKassa - ТОЛЬКО PRODUCTION
+// Конфигурация платежной системы YooKassa - PRODUCTION через Netlify Functions
 export const PAYMENT_CONFIG = {
-  // Данные из переменных окружения
-  shopId: import.meta.env.VITE_YOOKASSA_SHOP_ID,
-  secretKey: import.meta.env.VITE_YOOKASSA_SECRET_KEY,
-
   // URL для возврата после оплаты
   returnUrl: window.location.origin + '/payment/success',
 
-  // YooKassa API
-  apiUrl: 'https://api.yookassa.ru/v3',
+  // Netlify Functions API endpoints
+  createPaymentUrl: '/.netlify/functions/create-payment',
+  checkStatusUrl: '/.netlify/functions/payment-status',
 
   // Конфигурация планов
   plans: {
@@ -55,50 +52,30 @@ function loadYooKassaSDK() {
   })
 }
 
-// Функция создания реального платежа YooKassa
+// Функция создания платежа через Netlify Functions
 export const createYooKassaPayment = async (planId, billingPeriod, userEmail) => {
   const plan = PAYMENT_CONFIG.plans[planId.toLowerCase()]
   if (!plan || !plan[billingPeriod]) {
     throw new Error('Неверный план или период оплаты')
   }
 
-  if (!PAYMENT_CONFIG.shopId || !PAYMENT_CONFIG.secretKey) {
-    throw new Error('Не настроены ключи YooKassa. Обратитесь к администратору.')
-  }
+  console.log('Создаем платеж через Netlify Functions:', { planId, billingPeriod })
 
-  const paymentData = {
-    amount: {
-      value: plan[billingPeriod].amount.toString(),
-      currency: plan[billingPeriod].currency
-    },
-    confirmation: {
-      type: 'embedded'
-    },
-    capture: true,
-    description: plan[billingPeriod].description,
-    metadata: {
-      plan_id: planId,
-      billing_period: billingPeriod,
-      user_email: userEmail,
-      source: 'metricspace_web'
-    }
-  }
-
-  console.log('Создаем платеж YooKassa:', { planId, billingPeriod, amount: paymentData.amount })
-
-  const response = await fetch(`${PAYMENT_CONFIG.apiUrl}/payments`, {
+  const response = await fetch(PAYMENT_CONFIG.createPaymentUrl, {
     method: 'POST',
     headers: {
-      'Authorization': `Basic ${btoa(PAYMENT_CONFIG.shopId + ':' + PAYMENT_CONFIG.secretKey)}`,
-      'Content-Type': 'application/json',
-      'Idempotence-Key': crypto.randomUUID()
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify(paymentData)
+    body: JSON.stringify({
+      planId,
+      billingPeriod,
+      userEmail
+    })
   })
 
   if (!response.ok) {
     const errorData = await response.text()
-    console.error('YooKassa API error:', response.status, errorData)
+    console.error('Payment creation error:', response.status, errorData)
     throw new Error(`Ошибка создания платежа: ${response.status}`)
   }
 
@@ -107,15 +84,15 @@ export const createYooKassaPayment = async (planId, billingPeriod, userEmail) =>
   return result
 }
 
-// Основная функция инициализации платежа - ТОЛЬКО PRODUCTION
+// Основная функция инициализации платежа
 export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
   try {
-    console.log('Инициализируем реальный платеж YooKassa...')
+    console.log('Инициализируем платеж YooKassa...')
 
     // Загружаем YooKassa SDK
     await loadYooKassaSDK()
 
-    // Создаем платеж через YooKassa API
+    // Создаем платеж через Netlify Functions
     const paymentResponse = await createYooKassaPayment(planId, billingPeriod, userEmail)
 
     if (!paymentResponse.confirmation?.confirmation_token) {
@@ -152,16 +129,11 @@ export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSu
   }
 }
 
-// Проверка статуса платежа
+// Проверка статуса платежа через Netlify Functions
 export const checkPaymentStatus = async (paymentId) => {
-  if (!PAYMENT_CONFIG.shopId || !PAYMENT_CONFIG.secretKey) {
-    throw new Error('Не настроены ключи YooKassa')
-  }
-
-  const response = await fetch(`${PAYMENT_CONFIG.apiUrl}/payments/${paymentId}`, {
+  const response = await fetch(`${PAYMENT_CONFIG.checkStatusUrl}?paymentId=${paymentId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${btoa(PAYMENT_CONFIG.shopId + ':' + PAYMENT_CONFIG.secretKey)}`,
       'Content-Type': 'application/json'
     }
   })
