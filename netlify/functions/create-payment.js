@@ -1,5 +1,10 @@
 const crypto = require('crypto')
-const fetch = require('node-fetch') // Убедитесь, что в package.json добавлен node-fetch
+
+// Вспомогательная функция для динамического импорта fetch
+async function getFetch() {
+  const { default: fetch } = await import('node-fetch')
+  return fetch
+}
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -12,7 +17,6 @@ exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
   }
-
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -35,7 +39,6 @@ exports.handler = async (event, context) => {
       }
     }
 
-    // Определение тарифов
     const plans = {
       pro: {
         monthly: { amount: 990.00, description: 'Metricspace Pro – месячная подписка' },
@@ -55,48 +58,29 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Invalid plan or billing period' })
       }
     }
-
     const { amount, description } = plans[planKey][billingPeriod]
 
-    // Формирование данных платежа с обязательным разделом receipt
     const paymentData = {
-      amount: {
-        value: amount.toFixed(2),
-        currency: 'RUB'
-      },
-      confirmation: {
-        type: 'embedded'
-      },
+      amount: { value: amount.toFixed(2), currency: 'RUB' },
+      confirmation: { type: 'embedded' },
       capture: true,
       description,
-      metadata: {
-        plan_id: planId,
-        billing_period: billingPeriod,
-        user_email: userEmail,
-        source: 'metricspace_web'
-      },
+      metadata: { plan_id: planId, billing_period: billingPeriod, user_email: userEmail },
       receipt: {
-        customer: {
-          email: userEmail
-        },
-        items: [
-          {
-            description,
-            quantity: 1.00,
-            amount: {
-              value: amount.toFixed(2),
-              currency: 'RUB'
-            },
-            vat_code: 2 // Код НДС 20%
-          }
-        ],
-        tax_system_code: 1 // Общая система налогообложения
+        customer: { email: userEmail },
+        items: [{
+          description,
+          quantity: 1.00,
+          amount: { value: amount.toFixed(2), currency: 'RUB' },
+          vat_code: 2
+        }],
+        tax_system_code: 1
       },
-      send: true // Отправить чек на почту покупателя
+      send: true
     }
 
     const idempotenceKey = crypto.randomUUID()
-
+    const fetch = await getFetch()
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
       headers: {
@@ -108,7 +92,6 @@ exports.handler = async (event, context) => {
     })
 
     const result = await response.json()
-
     if (!response.ok) {
       return {
         statusCode: response.status,
