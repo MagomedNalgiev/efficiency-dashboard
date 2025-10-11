@@ -1,12 +1,7 @@
-const crypto = require('crypto')
+import crypto from 'crypto'
+import fetch from 'node-fetch'
 
-// Вспомогательная функция для динамического импорта fetch
-async function getFetch() {
-  const { default: fetch } = await import('node-fetch')
-  return fetch
-}
-
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -30,7 +25,6 @@ exports.handler = async (event, context) => {
 
     const shopId = process.env.YOOKASSA_SHOP_ID
     const secretKey = process.env.YOOKASSA_SECRET_KEY
-
     if (!shopId || !secretKey) {
       return {
         statusCode: 500,
@@ -58,8 +52,8 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Invalid plan or billing period' })
       }
     }
-    const { amount, description } = plans[planKey][billingPeriod]
 
+    const { amount, description } = plans[planKey][billingPeriod]
     const paymentData = {
       amount: { value: amount.toFixed(2), currency: 'RUB' },
       confirmation: { type: 'embedded' },
@@ -80,7 +74,6 @@ exports.handler = async (event, context) => {
     }
 
     const idempotenceKey = crypto.randomUUID()
-    const fetch = await getFetch()
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
       headers: {
