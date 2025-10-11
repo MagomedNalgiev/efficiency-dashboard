@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabaseAuthService } from '../../services/supabaseAuthService'
+import { checkPaymentStatus } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
 
 export default function PaymentSuccessPage() {
@@ -19,14 +20,30 @@ export default function PaymentSuccessPage() {
         const planId = searchParams.get('plan')
         const billingPeriod = searchParams.get('period')
         const paymentId = searchParams.get('payment_id')
-        const isDemo = searchParams.get('demo') === 'true'
 
-        if (!planId || !billingPeriod) {
+        if (!planId || !billingPeriod || !paymentId) {
           throw new Error('Недостающие параметры платежа')
         }
 
-        console.log('Demo платеж - обновляем план пользователя')
-        await handleSuccessfulPayment(planId, billingPeriod, paymentId)
+        console.log('Обрабатываем результат платежа:', { planId, billingPeriod, paymentId })
+
+        // Проверяем статус платежа в YooKassa
+        const paymentStatus = await checkPaymentStatus(paymentId)
+        console.log('Статус платежа:', paymentStatus)
+
+        if (paymentStatus.status === 'succeeded' && paymentStatus.paid) {
+          await handleSuccessfulPayment(planId, billingPeriod, paymentId, paymentStatus)
+        } else if (paymentStatus.status === 'canceled') {
+          throw new Error('Платеж был отменен')
+        } else if (paymentStatus.status === 'pending') {
+          // Платеж еще обрабатывается - можем показать соответствующее сообщение
+          setIsLoading(true)
+          // Можно добавить периодическую проверку статуса
+          setTimeout(() => handlePaymentResult(), 3000)
+          return
+        } else {
+          throw new Error(`Неожиданный статус платежа: ${paymentStatus.status}`)
+        }
 
       } catch (error) {
         console.error('Ошибка обработки результата платежа:', error)
@@ -38,7 +55,7 @@ export default function PaymentSuccessPage() {
     handlePaymentResult()
   }, [searchParams, user, updateUserPlan])
 
-  const handleSuccessfulPayment = async (planId, billingPeriod, paymentId) => {
+  const handleSuccessfulPayment = async (planId, billingPeriod, paymentId, paymentStatus) => {
     try {
       if (!user) {
         throw new Error('Пользователь не авторизован')
@@ -46,8 +63,10 @@ export default function PaymentSuccessPage() {
 
       console.log('Обновляем план пользователя:', { planId, billingPeriod })
 
+      // Обновляем план в базе данных
       await supabaseAuthService.updateUserPlan(user.id, planId, billingPeriod)
 
+      // Обновляем локальное состояние
       if (updateUserPlan) {
         await updateUserPlan(planId, billingPeriod)
       }
@@ -55,7 +74,9 @@ export default function PaymentSuccessPage() {
       setPaymentInfo({
         planId: planId.toUpperCase(),
         billingPeriod,
-        paymentId
+        paymentId,
+        amount: paymentStatus.amount?.value,
+        currency: paymentStatus.amount?.currency
       })
 
       setIsSuccess(true)
@@ -64,7 +85,8 @@ export default function PaymentSuccessPage() {
         plan_id: planId,
         billing_period: billingPeriod,
         user_id: user.id,
-        payment_id: paymentId
+        payment_id: paymentId,
+        amount: paymentStatus.amount?.value
       })
 
       console.log('План успешно обновлен')
@@ -100,12 +122,20 @@ export default function PaymentSuccessPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Ошибка платежа</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => navigate('/pricing')}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-          >
-            Попробовать еще раз
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/pricing')}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            >
+              Попробовать еще раз
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300"
+            >
+              Вернуться к дашборду
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -122,6 +152,14 @@ export default function PaymentSuccessPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Оплата прошла успешно!</h2>
           <p className="text-gray-600 mb-4">Ваша подписка успешно активирована</p>
+
+          {paymentInfo && (
+            <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+              <p className="text-sm text-gray-600">План: <span className="font-semibold">{paymentInfo.planId}</span></p>
+              <p className="text-sm text-gray-600">Период: <span className="font-semibold">{paymentInfo.billingPeriod === 'yearly' ? 'Годовая' : 'Месячная'}</span></p>
+              <p className="text-sm text-gray-600">ID платежа: <span className="font-mono text-xs">{paymentInfo.paymentId}</span></p>
+            </div>
+          )}
 
           <button
             onClick={() => navigate('/dashboard')}

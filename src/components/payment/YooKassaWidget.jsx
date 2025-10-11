@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { initMockPayment } from '../../config/payment'
+import { initYooKassaPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
@@ -21,26 +21,31 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       setError(null)
 
       try {
-        console.log('Инициализируем mock платежную форму для:', planId, billingPeriod)
+        console.log('Инициализируем платежную форму для:', planId, billingPeriod)
 
-        const widget = await initMockPayment(
+        const widget = await initYooKassaPayment(
           planId,
           billingPeriod,
           user.email,
           (paymentData) => {
-            console.log('Mock платеж инициализирован:', paymentData)
+            console.log('Платеж инициализирован:', paymentData)
             trackEvent('payment_initiated', {
               plan_id: planId,
               billing_period: billingPeriod,
               user_id: user.id,
-              payment_id: paymentData.payment_id,
-              test_mode: true
+              payment_id: paymentData.id
             })
           },
           (error) => {
-            console.error('Mock ошибка платежа:', error)
+            console.error('Ошибка платежа:', error)
             setError(error)
             setIsLoading(false)
+            trackEvent('payment_error', {
+              plan_id: planId,
+              billing_period: billingPeriod,
+              user_id: user.id,
+              error: error
+            })
             if (onError) onError(error)
           }
         )
@@ -49,7 +54,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
         setIsLoading(false)
 
       } catch (error) {
-        console.error('Ошибка инициализации mock виджета:', error)
+        console.error('Ошибка инициализации виджета:', error)
         setError(error.message)
         setIsLoading(false)
         if (onError) onError(error.message)
@@ -58,6 +63,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
 
     initializePayment()
 
+    // Cleanup
     return () => {
       if (widgetInstance && widgetInstance.destroy) {
         widgetInstance.destroy()
@@ -76,7 +82,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">DEMO: Оплата подписки</h3>
+          <h3 className="text-lg font-semibold">Оплата подписки</h3>
           <button
             onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 text-xl"
@@ -88,7 +94,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
         {isLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Загрузка demo формы...</span>
+            <span className="ml-2 text-gray-600">Загрузка платежной формы...</span>
           </div>
         )}
 
@@ -99,11 +105,12 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
           </div>
         )}
 
+        {/* Контейнер для виджета YooKassa */}
         <div id="yookassa-payment-form"></div>
 
         <div className="mt-4 text-sm text-gray-500 text-center">
-          <p>🧪 DEMO режим тестирования</p>
-          <p>Реальной оплаты не происходит</p>
+          <p>🔒 Безопасная оплата через YooKassa</p>
+          <p>Принимаем карты, SberPay, YooMoney</p>
         </div>
       </div>
     </div>

@@ -1,9 +1,8 @@
-// Конфигурация платежной системы YooKassa
+// Конфигурация платежной системы YooKassa - ТОЛЬКО PRODUCTION
 export const PAYMENT_CONFIG = {
   // Данные из переменных окружения
   shopId: import.meta.env.VITE_YOOKASSA_SHOP_ID,
   secretKey: import.meta.env.VITE_YOOKASSA_SECRET_KEY,
-  mode: import.meta.env.VITE_PAYMENT_MODE || 'production', // 'demo' или 'production'
 
   // URL для возврата после оплаты
   returnUrl: window.location.origin + '/payment/success',
@@ -40,11 +39,31 @@ export const PAYMENT_CONFIG = {
   }
 }
 
+// Загрузка YooKassa SDK
+function loadYooKassaSDK() {
+  return new Promise((resolve, reject) => {
+    if (window.YooMoneyCheckoutWidget) {
+      resolve()
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js'
+    script.onload = resolve
+    script.onerror = () => reject(new Error('Ошибка загрузки YooKassa SDK'))
+    document.head.appendChild(script)
+  })
+}
+
 // Функция создания реального платежа YooKassa
 export const createYooKassaPayment = async (planId, billingPeriod, userEmail) => {
   const plan = PAYMENT_CONFIG.plans[planId.toLowerCase()]
   if (!plan || !plan[billingPeriod]) {
     throw new Error('Неверный план или период оплаты')
+  }
+
+  if (!PAYMENT_CONFIG.shopId || !PAYMENT_CONFIG.secretKey) {
+    throw new Error('Не настроены ключи YooKassa. Обратитесь к администратору.')
   }
 
   const paymentData = {
@@ -60,9 +79,12 @@ export const createYooKassaPayment = async (planId, billingPeriod, userEmail) =>
     metadata: {
       plan_id: planId,
       billing_period: billingPeriod,
-      user_email: userEmail
+      user_email: userEmail,
+      source: 'metricspace_web'
     }
   }
+
+  console.log('Создаем платеж YooKassa:', { planId, billingPeriod, amount: paymentData.amount })
 
   const response = await fetch(`${PAYMENT_CONFIG.apiUrl}/payments`, {
     method: 'POST',
@@ -75,164 +97,78 @@ export const createYooKassaPayment = async (planId, billingPeriod, userEmail) =>
   })
 
   if (!response.ok) {
-    throw new Error('Ошибка создания платежа')
+    const errorData = await response.text()
+    console.error('YooKassa API error:', response.status, errorData)
+    throw new Error(`Ошибка создания платежа: ${response.status}`)
   }
 
-  return await response.json()
+  const result = await response.json()
+  console.log('Платеж создан:', result.id)
+  return result
 }
 
-// Основная функция инициализации платежа
+// Основная функция инициализации платежа - ТОЛЬКО PRODUCTION
 export const initYooKassaPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
   try {
-    // В демо-режиме используем mock
-    if (PAYMENT_CONFIG.mode === 'demo') {
-      return await initMockPayment(planId, billingPeriod, userEmail, onSuccess, onError)
-    }
+    console.log('Инициализируем реальный платеж YooKassa...')
 
-    // Реальный режим - создаем платеж через YooKassa
-    console.log('Создаем реальный платеж YooKassa...')
+    // Загружаем YooKassa SDK
+    await loadYooKassaSDK()
 
+    // Создаем платеж через YooKassa API
     const paymentResponse = await createYooKassaPayment(planId, billingPeriod, userEmail)
 
     if (!paymentResponse.confirmation?.confirmation_token) {
       throw new Error('Не получен confirmation_token от YooKassa')
     }
 
-    // Загружаем YooKassa виджет
-    if (!window.YooMoneyCheckoutWidget) {
-      await loadYooKassaSDK()
-    }
-
     // Инициализируем виджет
     const checkout = new window.YooMoneyCheckoutWidget({
       confirmation_token: paymentResponse.confirmation.confirmation_token,
-      return_url: `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.id}`
+      return_url: `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.id}`,
+      error_callback: function(error) {
+        console.error('YooKassa widget error:', error)
+        if (onError) onError(error.message || 'Ошибка виджета оплаты')
+      }
     })
 
     // Отображаем виджет
     checkout.render('yookassa-payment-form')
-
-    if (onSuccess) {
-      onSuccess(paymentResponse)
-    }
+      .then(() => {
+        console.log('Виджет YooKassa загружен успешно')
+        if (onSuccess) onSuccess(paymentResponse)
+      })
+      .catch((error) => {
+        console.error('Ошибка отображения виджета:', error)
+        if (onError) onError('Ошибка отображения платежной формы')
+      })
 
     return checkout
 
   } catch (error) {
     console.error('Ошибка создания платежа:', error)
-    if (onError) onError(error.message)
+    if (onError) onError(error.message || 'Ошибка при создании платежа')
+    throw error
   }
 }
 
-// Загрузка YooKassa SDK
-function loadYooKassaSDK() {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js'
-    script.onload = resolve
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
-}
-
-// Mock функции остаются без изменений для демо-режима
-export const createMockPayment = async (planId, billingPeriod, userEmail) => {
-  const plan = PAYMENT_CONFIG.plans[planId.toLowerCase()]
-  if (!plan || !plan[billingPeriod]) {
-    throw new Error('Неверный план или период оплаты')
+// Проверка статуса платежа
+export const checkPaymentStatus = async (paymentId) => {
+  if (!PAYMENT_CONFIG.shopId || !PAYMENT_CONFIG.secretKey) {
+    throw new Error('Не настроены ключи YooKassa')
   }
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        payment_id: `mock_${Date.now()}`,
-        confirmation_token: `ct-mock-${Date.now()}`,
-        status: 'pending',
-        amount: plan[billingPeriod].amount,
-        description: plan[billingPeriod].description,
-        test_mode: true
-      })
-    }, 1000)
-  })
-}
-
-export const initMockPayment = async (planId, billingPeriod, userEmail, onSuccess, onError) => {
-  try {
-    console.log('Инициализируем DEMO платеж для:', planId, billingPeriod)
-
-    const paymentResponse = await createMockPayment(planId, billingPeriod, userEmail)
-
-    setTimeout(() => {
-      if (onSuccess) onSuccess(paymentResponse)
-    }, 500)
-
-    return {
-      render: (containerId) => {
-        const container = document.getElementById(containerId)
-        if (!container) return
-
-        const planInfo = PAYMENT_CONFIG.plans[planId.toLowerCase()]
-        const planData = planInfo[billingPeriod]
-
-        container.innerHTML = `
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-lg border-2 border-dashed border-blue-300">
-            <div class="text-center">
-              <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                </svg>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">🧪 DEMO Режим</h3>
-              <p class="text-sm text-gray-600 mb-4">Тестирование без реальной оплаты</p>
-              <div class="space-y-3">
-                <div class="bg-white p-3 rounded border">
-                  <p class="font-medium">${planData.description}</p>
-                  <p class="text-2xl font-bold text-blue-600">${planData.amount} ₽</p>
-                </div>
-                <button
-                  id="mock-pay-button"
-                  class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
-                >
-                  🎯 ДЕМО ОПЛАТА (Успешно)
-                </button>
-                <button
-                  id="mock-fail-button"
-                  class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-                >
-                  ❌ ДЕМО ОШИБКА
-                </button>
-              </div>
-              <p class="text-xs text-gray-500 mt-3">Это демо режим для тестирования интерфейса</p>
-            </div>
-          </div>
-        `
-
-        document.getElementById('mock-pay-button')?.addEventListener('click', () => {
-          container.innerHTML = `
-            <div class="text-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p>Обрабатываем платеж...</p>
-            </div>
-          `
-
-          setTimeout(() => {
-            window.location.href = `${PAYMENT_CONFIG.returnUrl}?plan=${planId}&period=${billingPeriod}&payment_id=${paymentResponse.payment_id}&demo=true`
-          }, 2000)
-        })
-
-        document.getElementById('mock-fail-button')?.addEventListener('click', () => {
-          if (onError) {
-            onError('Демо ошибка оплаты')
-          }
-        })
-      },
-      destroy: () => {
-        console.log('Mock widget destroyed')
-      }
+  const response = await fetch(`${PAYMENT_CONFIG.apiUrl}/payments/${paymentId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Basic ${btoa(PAYMENT_CONFIG.shopId + ':' + PAYMENT_CONFIG.secretKey)}`,
+      'Content-Type': 'application/json'
     }
+  })
 
-  } catch (error) {
-    console.error('Ошибка mock платежа:', error)
-    if (onError) onError(error.message)
+  if (!response.ok) {
+    throw new Error(`Ошибка проверки статуса: ${response.status}`)
   }
+
+  return await response.json()
 }
