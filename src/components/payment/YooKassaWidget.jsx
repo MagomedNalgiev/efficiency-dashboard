@@ -47,7 +47,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
         // Создаем виджет согласно официальной документации
         const checkout = new window.YooMoneyCheckoutWidget({
           confirmation_token: token,
-          return_url: `${window.location.origin}/payment/success?plan=${planId}&period=${billingPeriod}&payment_id=${payment.id}`,
+          return_url: `https://metricspace.ru/payment/success?plan=${planId}&period=${billingPeriod}&payment_id=${payment.id}`,
           error_callback: function(error) {
             console.error('Widget error:', error)
             setError('Ошибка виджета оплаты: ' + (error.message || 'Неизвестная ошибка'))
