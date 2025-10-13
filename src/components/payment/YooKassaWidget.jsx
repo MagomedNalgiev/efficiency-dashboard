@@ -230,4 +230,5 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       `}</style>
     </div>
   )
+
 }
