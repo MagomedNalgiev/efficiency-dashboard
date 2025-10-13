@@ -120,7 +120,7 @@ export default function PaymentSuccessPage() {
               <p><strong>Сумма:</strong> {paymentInfo.amount} {paymentInfo.currency}</p>
             )}
           </div>
-          <button onClick={() => navigate('/dashboard')} className="px-6 py-2 bg-green-500 rounded mr-4">
+          <button onClick={() => navigate('/app')} className="px-6 py-2 bg-green-500 rounded mr-4">
             Перейти в дашборд
           </button>
           <button onClick={() => navigate('/')} className="px-6 py-2 bg-gray-700 rounded">
