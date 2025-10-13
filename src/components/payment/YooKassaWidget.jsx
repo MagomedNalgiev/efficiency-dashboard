@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { createYooKassaPayment } from '../../config/payment'
 import { trackEvent } from '../../utils/analytics'
 
 export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onError, onClose }) {
@@ -9,6 +8,28 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
   const widgetRef = useRef(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Функция для создания платежа через Netlify Function
+  const createPayment = async (planId, billingPeriod, userEmail) => {
+    const response = await fetch('/.netlify/functions/create-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        planId,
+        billingPeriod,
+        userEmail
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Ошибка создания платежа')
+    }
+
+    return await response.json()
+  }
 
   useEffect(() => {
     if (!user?.email) {
@@ -35,7 +56,7 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
         await loadScript()
 
         // Создаем платеж и получаем confirmation_token
-        const payment = await createYooKassaPayment(planId, billingPeriod, user.email)
+        const payment = await createPayment(planId, billingPeriod, user.email)
         const token = payment.confirmation?.confirmation_token
         if (!token) throw new Error('Не получен confirmation_token')
 
@@ -230,5 +251,4 @@ export default function YooKassaWidget({ planId, billingPeriod, onSuccess, onErr
       `}</style>
     </div>
   )
-
 }
