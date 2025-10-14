@@ -228,58 +228,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Отзывы */}
-      <section
-        className="py-16 px-4 bg-white/5"
-        onMouseEnter={() => trackLandingEvents.reviewsSectionViewed()}
-      >
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Что говорят пользователи
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                name: 'Алексей Иванов',
-                role: 'Tech Lead, IT-компания',
-                text: 'Экономлю 5+ часов в неделю на расчетах. Теперь команда видит прогресс в реальном времени.',
-                rating: 5
-              },
-              {
-                name: 'Мария Петрова',
-                role: 'Product Manager',
-                text: 'Графики помогают объяснить метрики стейкхолдерам. Очень удобный инструмент!',
-                rating: 5
-              },
-              {
-                name: 'Дмитрий Сидоров',
-                role: 'CTO стартапа',
-                text: 'Перестали использовать Excel. Все данные в одном месте, красивая аналитика.',
-                rating: 5
-              }
-            ].map((review, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="flex mb-4">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-400 text-xl">⭐</span>
-                  ))}
-                </div>
-
-                <p className="text-white/80 mb-4 text-lg">"{review.text}"</p>
-
-                <div>
-                  <div className="font-semibold text-white">{review.name}</div>
-                  <div className="text-white/60 text-sm">{review.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA секция */}
       <section
         className="py-20 px-4"
