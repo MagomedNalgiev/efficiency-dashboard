@@ -21,21 +21,8 @@ export default function BlogPost() {
       {/* Header */}
       <Header />
 
-      {/* Breadcrumbs */}
-      <div className="bg-gray-800 py-4">
-        <div className="max-w-4xl mx-auto px-6">
-          <nav className="text-sm text-gray-400">
-            <Link to="/" className="hover:text-white transition-colors">Главная</Link>
-            <span className="mx-2">›</span>
-            <Link to="/blog" className="hover:text-white transition-colors">Блог</Link>
-            <span className="mx-2">›</span>
-            <span className="text-white">{post.title}</span>
-          </nav>
-        </div>
-      </div>
-
       {/* Article header */}
-      <div className="max-w-4xl mx-auto px-6 pt-12">
+      <div className="max-w-4xl mx-auto px-6 pt-16">
         <span className="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
           {post.category}
         </span>
