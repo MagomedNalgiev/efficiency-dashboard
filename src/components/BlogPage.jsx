@@ -9,7 +9,7 @@ export default function BlogPage() {
       <Header />
 
       {/* Заголовок */}
-      <div className="text-center py-16">
+      <div className="text-center py-20">
         <h1 className="text-4xl font-bold text-white mb-4">
           Блог о метриках эффективности
         </h1>
