@@ -77,19 +77,19 @@ export default function LandingPage() {
                 onClick={handleGetStarted}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-8 py-4 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                🚀 Начать бесплатно
+                Начать бесплатно
               </button>
 
               <button
                 onClick={handleViewPricing}
                 className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg px-8 py-4 rounded-lg font-semibold transition-all duration-200 border border-white/30"
               >
-                💰 Посмотреть тарифы
+                Посмотреть тарифы
               </button>
             </div>
 
             <p className="text-white/60 text-sm mt-4">
-              ✨ Бесплатный план • 🚫 Без кредитной карты • ⚡ Мгновенный доступ
+              Бесплатный план • Мгновенный доступ
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl font-bold text-red-400 mb-6">😫 Проблемы</h3>
+              <h3 className="text-3xl font-bold text-red-400 mb-6">Проблемы</h3>
               <ul className="space-y-4 text-white/80 text-lg">
                 <li className="flex items-start">
                   <span className="text-red-400 mr-3">❌</span>
@@ -135,7 +135,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h3 className="text-3xl font-bold text-green-400 mb-6">✨ Решение</h3>
+              <h3 className="text-3xl font-bold text-green-400 mb-6">Решение</h3>
               <ul className="space-y-4 text-white/80 text-lg">
                 <li className="flex items-start">
                   <span className="text-green-400 mr-3">✅</span>
@@ -291,7 +291,7 @@ export default function LandingPage() {
           </h2>
 
           <p className="text-xl text-white/80 mb-8">
-            Присоединяйтесь к сотням команд, которые уже используют Metricspace
+            Присоединяйтесь к командам, которые уже используют Metricspace
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
@@ -299,7 +299,7 @@ export default function LandingPage() {
               onClick={handleGetStarted}
               className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white text-xl px-12 py-4 rounded-lg font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              🚀 Начать бесплатно прямо сейчас
+              Начать бесплатно прямо сейчас
             </button>
           </div>
 

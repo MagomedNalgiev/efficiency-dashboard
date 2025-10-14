@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom'
+import Header from './Header'
 import { blogPosts } from '../data/blogPosts'
 
 export default function BlogPage() {
   return (
     <div className="min-h-screen bg-gray-900">
+      {/* Добавляем существующий Header */}
+      <Header />
+
       {/* Заголовок */}
       <div className="text-center py-16">
         <h1 className="text-4xl font-bold text-white mb-4">
