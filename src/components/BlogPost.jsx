@@ -22,7 +22,7 @@ export default function BlogPost() {
       <Header />
 
       {/* Article header */}
-      <div className="max-w-4xl mx-auto px-6 pt-16">
+      <div className="max-w-4xl mx-auto px-6 pt-20">
         <span className="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
           {post.category}
         </span>
