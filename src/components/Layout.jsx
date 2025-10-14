@@ -17,53 +17,53 @@ export default function Layout() {
       >
         <div className="p-6 text-white h-full overflow-y-auto">
           <h3 className="text-lg font-bold mb-4">DELIVERY</h3>
-          <Link to="/velocity" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/velocity" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Velocity
           </Link>
-          <Link to="/cycletime" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/cycletime" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Cycle Time
           </Link>
-          <Link to="/deploymentfrequency" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/deploymentfrequency" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Deployment Frequency
           </Link>
 
           <h3 className="text-lg font-bold mb-4 mt-6">QUALITY</h3>
-          <Link to="/defectleakage" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/defectleakage" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Defect Leakage
           </Link>
-          <Link to="/mttr" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/mttr" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             MTTR
           </Link>
 
           <h3 className="text-lg font-bold mb-4 mt-6">МАРКЕТИНГ</h3>
-          <Link to="/cac" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/cac" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             CAC
           </Link>
-          <Link to="/romi" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/romi" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             ROMI
           </Link>
-          <Link to="/ltv" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/ltv" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             LTV
           </Link>
 
           <h3 className="text-lg font-bold mb-4 mt-6">ФИНАНСЫ</h3>
-          <Link to="/ebitda" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/ebitda" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             EBITDA
           </Link>
-          <Link to="/ros" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/ros" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             ROS
           </Link>
-          <Link to="/bep" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/bep" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             BEP
           </Link>
 
           <h3 className="text-lg font-bold mb-4 mt-6">ПРОЧЕЕ</h3>
-          <Link to="/custommetric" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/custommetric" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Custom Metric
           </Link>
 
           <h3 className="text-lg font-bold mb-4 mt-6">УПРАВЛЕНИЕ</h3>
-          <Link to="/data-manager" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
+          <Link to="/app/data-manager" className="block py-1 px-4 hover:bg-gray-700 rounded mb-1">
             Управление данными
           </Link>
         </div>
