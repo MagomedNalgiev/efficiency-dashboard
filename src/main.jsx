@@ -15,6 +15,7 @@ import PricingPage from './components/PricingPage.jsx'
 import Layout from './components/Layout';
 import App from './App.jsx';
 import BlogPage from './components/BlogPage.jsx'
+import BlogPost from './components/BlogPost.jsx'
 import PaymentSuccessPage from './components/payment/PaymentSuccessPage'
 
 
@@ -65,6 +66,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             {/* Отдельные страницы */}
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/payment/success" element={<PaymentSuccessPage />} />
           </Routes>
         </BrowserRouter>
