@@ -21,7 +21,7 @@ export default function BlogPost() {
       <div className="bg-gray-800 py-4">
         <div className="max-w-4xl mx-auto px-6">
           <nav className="text-sm text-gray-400">
-            <Link to="/" className="hover:text-white">Главная</Link>
+            <Link to="/app" className="hover:text-white">Главная</Link>
             <span className="mx-2">›</span>
             <Link to="/blog" className="hover:text-white">Блог</Link>
             <span className="mx-2">›</span>
