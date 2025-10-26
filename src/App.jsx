@@ -24,7 +24,7 @@ function App() {
               <span className="text-white font-bold">{currentPlanInfo?.name}</span>
               {currentPlan === 'FREE' && currentPlanInfo && (
                 <span className="text-orange-400 ml-2">
-                  ({(currentPlanInfo.limits.calculationsPerMonth - (currentPlanInfo.usage?.calculationsThisMonth || 0))} расчетов осталось)
+                  ({(currentPlanInfo.limits.calculationsPerMonth - (currentPlanInfo.usage?.calculationsThisMonth || 0))} расчетов)
                 </span>
               )}
             </div>
